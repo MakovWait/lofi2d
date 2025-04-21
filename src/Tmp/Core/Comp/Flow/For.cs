@@ -11,14 +11,19 @@ public class For<T> : Component where T : For<T>.IItem
     
     protected override Components Init(INodeInit self)
     {
-        var sIn = In.ToSignalFrom(self);
-        
         Dictionary<string, Node> nodes = new();
         Dictionary<string, Node> nodesCopy = new();
+
+        self.UseSignal(
+            In.Changed,
+            new SignalTarget(Update).Throttled(self)
+        );
+
+        return [];
         
-        self.UseEffect(() =>
+        void Update()
         {
-            var items = sIn.Value;
+            var items = In;
             
             foreach (var node in nodes)
             {
@@ -26,7 +31,7 @@ public class For<T> : Component where T : For<T>.IItem
                 Self.RemoveChild(node.Value);
             }
             nodes.Clear();
-
+        
             var idx = 0;
             foreach (var item in items)
             {
@@ -43,15 +48,13 @@ public class For<T> : Component where T : For<T>.IItem
                 }
                 idx++;
             }
-
+        
             foreach (var node in nodesCopy.Values)
             {
                 node.Free();
             }
             nodesCopy.Clear();
-        });
-
-        return [];
+        }
         
         void RegisterNode(string key, Node node)
         {
@@ -68,7 +71,7 @@ public class For<T> : Component where T : For<T>.IItem
 
 public class ReactiveList<T> : IEnumerable<T>
 {
-    private event Action? Changed;
+    public readonly Signal Changed = new();
 
     private readonly List<T> _items = [];
 
@@ -77,30 +80,19 @@ public class ReactiveList<T> : IEnumerable<T>
     public void Add(T item)
     {
         _items.Add(item);
-        Changed?.Invoke();
+        Changed.Emit();
     }
         
     public void Remove(T item)
     {
         _items.Remove(item);
-        Changed?.Invoke();
+        Changed.Emit();
     }
     
     public void Clear()
     {
         _items.Clear();
-        Changed?.Invoke();
-    }
-    
-    public ISignal<ReactiveList<T>> ToSignalFrom(INodeInit node)
-    {
-        var signal = node.CreateSignal(set =>
-        {
-            var trigger = () => set(this);
-            Changed += trigger;
-            return () => Changed -= trigger;
-        }, this);
-        return signal;
+        Changed.Emit();
     }
     
     public List<T>.Enumerator GetEnumerator()

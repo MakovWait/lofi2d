@@ -152,7 +152,7 @@ public static class ComponentEx
         return [self];
     }
     
-    public static IComponent If(this IComponent self, ISignal<bool> condition)
+    public static Conditional If(this IComponent self, Signal<bool> condition)
     {
         return new Conditional
         {
@@ -166,4 +166,3 @@ public interface IComponent
 {
     Node Build(Tree tree, Node? parent);
 }
-

@@ -1,355 +1,164 @@
-﻿using System.Buffers;
-using System.Collections;
-using System.Diagnostics;
+﻿namespace Tmp.Core.Comp;
 
-namespace Tmp.Core.Comp;
-
-[DebuggerDisplay("Name = {_name}, Value = {_value}")]
-internal class Signal<T> : ISignalMut<T>
+public class Signal<T>(T initial = default!)
 {
-    private T _value;
-    private readonly InnerSignal _innerSignal;
-    private string? _name;
-    private readonly ISignalScope _scope;
-    private ISignalValueEquals<T>? _equals;
+    private T _state = initial;
+    private readonly Targets _targets = new();
 
-    public Signal(T initial, ISignalScope scope, ISignalConfig config, ISignalBatch batch, ISignalValueEquals<T>? equals)
-    {
-        _scope = scope;
-        _equals = equals;
-        _value = initial;
-        _innerSignal = new InnerSignal(this, config, batch);
-    }
-
-    public T Value
-    {
-        get => Get();
-        set => Set(value);
-    }
-
-    public T UntrackedValue
-    {
-        get => _value;
-        set => _value = value;
-    }
-
-    public void SetValueEquals(ISignalValueEquals<T>? equals)
-    {
-        _equals = equals;
-    }
-
-    public void SetDebugName(string name)
-    {
-        _name = name;
-    }
-
-    private T Get()
-    {
-        _scope.Bind(_innerSignal);
-        return _value;
-    }
-
-    private void Set(T value)
-    {
-        if (_equals?.Equals(_value, value) ?? false) return;
-        _value = value;
-        _innerSignal.Notify();
-    }
-
-    private class InnerSignal(Signal<T> signal, ISignalConfig config, ISignalBatch batch) : IObservableSignal
-    {
-        private readonly SignalTargets _targets = [];
-        private readonly Signal<T> _signal = signal;
-
-        public void Notify()
-        {
-            if (config.Batched)
-            {
-                _targets.InvokeBatched(batch);
-            }
-            else
-            {
-                _targets.Invoke();
-            }
-        }
-
-        public void Add(ISignalTarget target)
-        {
-            _targets.Add(target);
-        }
-
-        public void Remove(ISignalTarget target)
-        {
-            _targets.Remove(target);
-        }
-    }
-}
-
-public interface ISignalValueEquals<in T> {
-    bool Equals(T prev, T next);
-}
-
-public static class SignalValueEquals
-{
-    public class ObjEquals<TValue> : ISignalValueEquals<TValue> where TValue : class
-    {
-        public bool Equals(TValue prev, TValue next)
-        {
-            return prev.Equals(next);
-        }
-    }
+    public T Value => _state;
     
-    public class ObjRef<TValue> : ISignalValueEquals<TValue> where TValue : class
+    public void Emit(T state)
     {
-        public bool Equals(TValue prev, TValue next)
-        {
-            return prev == next;
-        }
-    }
-    
-    public class Equitable<TValue> : ISignalValueEquals<TValue> where TValue : IEquatable<TValue>
-    {
-        public bool Equals(TValue prev, TValue next)
-        {
-            return prev.Equals(next);
-        }
-    }
-    
-    public class Const<TValue>(bool result) : ISignalValueEquals<TValue>
-    {
-        public bool Equals(TValue prev, TValue next)
-        {
-            return result;
-        }
-    }
-}
-
-public interface ISignal
-{
-    void SetDebugName(string name);
-}
-
-public interface ISignal<out T> : ISignal
-{
-    public T Value { get; }
-    
-    public T UntrackedValue { get; }
-
-    void SetValueEquals(ISignalValueEquals<T>? equals);
-}
-
-[DebuggerDisplay("Name = {_name}, Value = {Value}")]
-public class SignalConst<T>(T value) : ISignal<T>
-{
-    private string? _name;
-
-    public void SetDebugName(string name)
-    {
-        _name = name;
+        _state = state;
+        _targets.Handle(state);
     }
 
-    public T Value { get; } = value;
-
-    public T UntrackedValue => Value;
-
-    public void SetValueEquals(ISignalValueEquals<T>? equals)
-    {
-        
-    }
-}
-
-public interface ISignalMut<T> : ISignal<T>
-{
-    public new T Value { get; set; }
-    
-    public new T UntrackedValue { get; set; }
-}
-
-public static class SignalEx
-{
-    public static ISignal<T> ToSignal<T>(this T value)
-    {
-        return new SignalConst<T>(value);
-    }
-    
-    public static TSelf WithName<TSelf>(this TSelf self, string name) where TSelf : ISignal
-    {
-        self.SetDebugName(name);
-        return self;
-    }
-    
-    public static TSelf WithEquals<T, TSelf>(this TSelf self, ISignalValueEquals<T>? equals) where TSelf : ISignal<T>
-    {
-        self.SetValueEquals(equals);
-        return self;
-    }
-    
-    public static TSelf Set<T, TSelf>(this TSelf self, T value) where TSelf : ISignalMut<T>
-    {
-        self.Value = value;
-        return self;
-    }
-    
-    public static T Get<T>(this ISignal<T> self)
-    {
-        return self.Value;
-    }
-    
-    public static void Track<T>(this ISignal<T> self)
-    {
-        self.Get();
-    }
-}
-
-public class Signals(CurrentScope scope, SignalBatch targetsBatchedQueue)
-{
-    private readonly CurrentSignalScope _currentSignalScope = new(scope);
-    private readonly Config _config = new();
-    private bool _batched;
-
-    public bool Batched
-    {
-        get => _batched;
-        set => SetBatched(value);
-    }
-
-    public ISignalMut<T> Create<T>(T initial, ISignalValueEquals<T>? equals)
-    {
-        return new Signal<T>(initial, _currentSignalScope, _config, targetsBatchedQueue, equals);
-    }
-
-    public void FlushBatches()
-    {
-        targetsBatchedQueue.Trigger();
-    }
-
-    private void SetBatched(bool value)
-    {
-        _batched = value;
-        _config.Batched = value;
-    }
-
-    private class CurrentSignalScope(CurrentScope scope) : ISignalScope
-    {
-        public void Bind(IObservableSignal signal)
-        {
-            scope.Value?.Bind(signal);
-        }
-    }
-
-    private class Config : ISignalConfig
-    {
-        public bool Batched { get; set; } = false;
-    }
-}
-
-public interface IObservableSignal
-{
-    void Add(ISignalTarget target);
-
-    void Remove(ISignalTarget target);
-}
-
-public interface ISignalConfig
-{
-    public bool Batched { get; }
-}
-
-public interface ISignalBatch
-{
-    void Add(ISignalTarget target);
-}
-
-public class SignalBatch : ISignalBatch
-{
-    private readonly SignalTargets _targets = [];
-
-    public void Add(ISignalTarget target)
-    {
-        if (_targets.Contains(target)) return;
-        _targets.Add(target);
-    }
-
-    public void Trigger()
-    {
-        _targets.Invoke();
-        _targets.Clear();
-    }
-}
-
-public class SignalTargets : IEnumerable<ISignalTarget>
-{
-    private readonly List<ISignalTarget> _targets = [];
-
-    public void Add(ISignalTarget target)
+    public void Connect(ISignalTarget<T> target)
     {
         _targets.Add(target);
     }
 
-    public bool Contains(ISignalTarget target)
-    {
-        return _targets.Contains(target);
-    }
-
-    public void Remove(ISignalTarget target)
+    public void Disconnect(ISignalTarget<T> target)
     {
         _targets.Remove(target);
     }
 
-    public void Clear()
+    private class Targets
     {
-        _targets.Clear();
-    }
-
-    public void Invoke()
-    {
-        var count = _targets.Count;
-        var targetsCopy = ArrayPool<ISignalTarget>.Shared.Rent(count);
-        _targets.CopyTo(targetsCopy);
-
-        try
+        private readonly List<ISignalTarget<T>> _targets = [];
+        private bool _freeze;
+        
+        public void Handle(T state)
         {
-            for (var i = 0; i < count; i++)
+            Freeze(true);
+            foreach (var target in _targets)
             {
-                targetsCopy[i].Invoke();
+                target.Handle(state);
+            }
+            Freeze(false);
+        }
+        
+        public void Add(ISignalTarget<T> target)
+        {
+            EnsureIsUnfrozen();
+            _targets.Add(target);
+        }
+        
+        public void Remove(ISignalTarget<T> target)
+        {
+            EnsureIsUnfrozen();
+            _targets.Remove(target);
+        }
+        
+        private void Freeze(bool freeze)
+        {
+            _freeze = freeze;
+        }
+        
+        private void EnsureIsUnfrozen()
+        {
+            if (_freeze)
+            {
+                throw new InvalidOperationException("Cannot modify signal targets while it is frozen.");
             }
         }
-        finally
-        {
-            ArrayPool<ISignalTarget>.Shared.Return(targetsCopy);
-        }
     }
+}
 
-    public void InvokeBatched(ISignalBatch batch)
+public static class SignalNodeEx
+{
+    public static void UseSignal<T>(this INodeInit self, Signal<T> signal, ISignalTarget<T> target)
     {
-        foreach (var target in _targets)
-        {
-            batch.Add(target);
-        }
+        signal.Connect(target);
+        self.OnCleanup(() => signal.Disconnect(target));
     }
+}
 
-    public List<ISignalTarget>.Enumerator GetEnumerator()
+public interface ISignalTarget<T>
+{
+    public void Handle(T state);
+    
+    public class Deferred(ISignalTarget<T> origin, ICallDeferredSource deferredSource) : ISignalTarget<T>
     {
-        return _targets.GetEnumerator();
+        public void Handle(T state)
+        {
+            deferredSource.CallDeferred(origin.Handle, state);
+        }
     }
     
-    IEnumerator<ISignalTarget> IEnumerable<ISignalTarget>.GetEnumerator()
+    public class Throttled(ISignalTarget<T> origin, ICallDeferredSource deferredSource) : ISignalTarget<T>
     {
-        return _targets.GetEnumerator();
-    }
+        private T _lastState;
+        private bool _queued;
+        
+        public void Handle(T state)
+        {
+            _lastState = state;
+            if (_queued) return;
+            _queued = true;
+            deferredSource.CallDeferred(ThrottleHandle, new Empty());
+        }
 
-    IEnumerator IEnumerable.GetEnumerator()
+        private void ThrottleHandle(Empty _)
+        {
+            origin.Handle(_lastState);
+            _lastState = default;
+            _queued = false;
+        }
+    }
+    
+    // TODO impl it in a proper way
+    public class OneShot(ISignalTarget<T> origin) : ISignalTarget<T>
     {
-        return GetEnumerator();
+        private bool _handled;
+        
+        public void Handle(T state)
+        {
+            if (_handled) return;
+            origin.Handle(state);
+            _handled = true;
+        }
     }
 }
 
-public interface ISignalScope
+public static class ISignalTargetEx
 {
-    void Bind(IObservableSignal signal);
+    public static ISignalTarget<T> Throttled<T>(this ISignalTarget<T> origin, ICallDeferredSource deferredSource)
+    {
+        return new ISignalTarget<T>.Throttled(origin, deferredSource);
+    }
+    
+    public static ISignalTarget<T> Deferred<T>(this ISignalTarget<T> origin, ICallDeferredSource deferredSource)
+    {
+        return new ISignalTarget<T>.Deferred(origin, deferredSource);
+    }    
+    
+    public static ISignalTarget<T> OneShot<T>(this ISignalTarget<T> origin)
+    {
+        return new ISignalTarget<T>.OneShot(origin);
+    }
 }
 
-public interface ISignalTarget
+public class SignalTarget<T>(Action<T> action) : ISignalTarget<T>
 {
-    public void Invoke();
+    public void Handle(T state)
+    {
+        action(state);
+    }
+}
+
+public class SignalTarget(Action action) : ISignalTarget<Empty>
+{
+    public void Handle(Empty state)
+    {
+        action();
+    }
+}
+
+public class Signal : Signal<Empty>
+{
+    public new void Emit(Empty state = default)
+    {
+        base.Emit(state);
+    }
 }

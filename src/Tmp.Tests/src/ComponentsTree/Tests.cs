@@ -1,3 +1,4 @@
+using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Core.Comp.Flow;
 
@@ -8,142 +9,117 @@ public class Tests
     [Test]
     public void Smoke()
     {
-        var currentScope = new CurrentScope();
-        var deferredQueue = new SignalBatch();
-        var signals = new Signals(currentScope, deferredQueue);
-        var tree = new Tree(currentScope, signals);
-        var node = tree.CreateNode("test");
-
-        node.Init(self =>
-        {
-            var signal = self.UseSignal(0).WithName("signal 1");
-            var signal2 = self.UseSignal(2).WithName("signal 2");
-
-            var mem = self.UseMemo(_ =>
-            {
-                self.SetScopeName("memo");
-                Console.WriteLine($"memo {signal.Value} {signal2.Value}");
-                return signal.Value + signal2.Value;
-            }, 0).WithName("memo");
-
-            Console.WriteLine($"now {mem.Value}");
-
-            self.UseEffect(() =>
-            {
-                self.SetScopeName("effect");
-                // self.UseEffect(() =>
-                // {
-                //     Console.WriteLine($"effect {signal.Value}");
-                // });
-
-                Console.WriteLine($"effect {mem.Value}");
-            });
-
-            // self.UseEffect(() =>
-            // {
-            //     var v = signal.Value;
-            //     var v2 = signal2.Value;
-            //     Console.WriteLine("changed");
-            // });
-
-            // self.UseEffect(() =>
-            // {
-            //     Console.WriteLine(signal.Value);
-            //     
-            //     self.UseEffect(() =>
-            //     {
-            //         self.Untrack(() =>
-            //         {
-            //             Console.WriteLine($"untracked scope {signal.Value}");
-            //         });
-            //         
-            //         Console.WriteLine($"inner {signal2.Value}");
-            //         
-            //         self.OnCleanup(() =>
-            //         {
-            //             Console.WriteLine("inner Cleanup");
-            //         });
-            //     });
-            //     
-            //     self.OnCleanup(() =>
-            //     {
-            //         Console.WriteLine("outer Cleanup");
-            //     });
-            // });
-
-            self.OnCleanup(() => { Console.WriteLine("node Cleanup"); });
-
-            // signal.Value = 5;
-            // Console.WriteLine("----");
-            // signal2.Value = 6;
-            // signal2.Value = 7;
-            // signal2.Value = 8;
-
-            // self.Batch(() =>
-            // {
-            //     self.Batch(() =>
-            //     {
-            //         signal.Value = 10;
-            //     });
-            //     signal2.Value = 10;
-            // });
-
-            // self.Batch(() =>
-            // {
-            //     signal2.Value = 10;
-            //     signal.Value = 11;
-            // });
-
-            signal2.Value = 10;
-            signal.Value = 11;
-        });
-        node.Mount();
-    }
-
-    [Test]
-    public void Components()
-    {
         var tree = new Tree();
-        ISignalMut<bool>? cond = null;
-        
         tree.Build(new ComponentFunc(self =>
         {
-            cond = self.UseSignal(false);
-
-            // var left = new TestComponent("left");
-            // var right = new TestComponent("right");
-            // var comp = self.UseMemo<IComponent>(
-            //     _ => cond.Value ? left : right,
-            //     left
-            // );
+            self.OnMount(() =>
+            {
+                Console.WriteLine("before children mount!!!");
+                self.OnLateCleanup(() => Console.WriteLine("after children cleanup!!! 1"));
+            });
             
-            return [
-                new ComponentFunc(self => []),
-                new ComponentFunc(self =>
+            self.OnLateMount(() =>
+            {
+                Console.WriteLine("after children mount!!!");
+                self.OnLateCleanup(() => Console.WriteLine("after children cleanup!!! 2"));
+            });
+            
+            self.OnCleanup(() =>
+            {
+                Console.WriteLine("before children cleanup!!!");
+            });
+            
+            self.CallDeferred(() =>
+            {
+                Console.WriteLine("deferred!!!");
+            });
+            
+            return new ComponentFunc(self =>
+            {
+                self.OnMount(() =>
                 {
-                    self.OnMount(() =>
-                    {
-                        Console.WriteLine("mount!");
-                    });
-                    
-                    self.OnCleanup(() =>
-                    {
-                        Console.WriteLine("bye!");
-                    });
+                    Console.WriteLine("on child mount!!!");
+                    self.OnLateCleanup(() => Console.WriteLine("on child cleanup!!!"));
+                });
+                
+                return [];
+            });
+        }));
+        tree.FlushDeferredQueue();
+        tree.Free();
+    }
+}
 
-                    return [];
-                }).If(cond)
-            ];
-        }) {Name = "root"});
-
-        cond!.Value = true;
-        cond!.Value = false;
-        cond!.Value = true;
+public class ConditionalTests
+{
+    [Test]
+    public void Smoke()
+    {
+        var cond = new Signal<bool>();
+        var tree = new Tree();
+        tree.Build(new ComponentFunc(self =>
+        {
+            return new ComponentFunc(self =>
+            {
+                self.OnMount(() => Assert.Pass());
+                return [];
+            }).If(cond);
+        }));
+        cond.Emit(true);
+        tree.FlushDeferredQueue();
+        Assert.Fail();
+    }
+    
+    [Test]
+    // TODO now it is not checked but should be one day
+    public void UpdateIsQueued()
+    {
+        var cond = new Signal<bool>();
+        var tree = new Tree();
+        tree.Build(new ComponentFunc(self =>
+        {
+            return new ComponentFunc(self =>
+            {
+                self.OnMount(() => Assert.Pass());
+                return [];
+            }).If(cond);
+        }));
+        cond.Emit(true);
+        cond.Emit(false);
+        cond.Emit(true);
+        tree.FlushDeferredQueue();
+        Assert.Fail();
     }
 }
 
 public class ForTests
 {
+    [Test]
+    // TODO now it is not checked but should be one day
+    public void UpdateIsQueued()
+    {
+        var tree = new Tree();
+
+        var items = new ReactiveList<Item>();
+        tree.Build(new ComponentFunc(self =>
+        {
+            return new For<Item>
+            {
+                In = items,
+                Render = (item, _) => new ComponentFunc(self =>
+                {
+                    self.OnMount(() => Console.WriteLine(item.Key) );
+                    return [];
+                })
+            };
+        }));
+        
+        items.Add(new Item("test"));
+        items.Add(new Item("test2"));
+        tree.FlushDeferredQueue();
+        Assert.Pass();
+    }
+    
     [Test]
     public void Smoke()
     {
@@ -169,11 +145,32 @@ public class ForTests
         
         items.Add(new Item("test"));
         tree.FlushDeferredQueue();
-        tree.FlushDeferredQueue();
-        
         Assert.Fail();
     }
 
+    [Test]
+    public void ForIsDeferred()
+    {
+        var tree = new Tree();
+
+        var items = new ReactiveList<Item>();
+        tree.Build(new ComponentFunc(self =>
+        {
+            return new For<Item>
+            {
+                In = items,
+                Render = (item, _) => new ComponentFunc(self =>
+                {
+                    self.OnMount(Assert.Fail);
+                    return [];
+                })
+            };
+        }));
+        
+        items.Add(new Item("test"));
+        Assert.Pass();
+    }
+    
     private class Item(string key) : For<Item>.IItem
     {
         public string Key { get; } = key;
@@ -205,7 +202,7 @@ public class PortalTests
                     {
                         var ctx = self.UseContext<int>();
 
-                        self.UseEffect(() =>
+                        self.OnMount(() =>
                         {
                             Assert.That(ctx, Is.EqualTo(1));
                             Assert.Pass();
@@ -216,240 +213,31 @@ public class PortalTests
                 }
             ];
         }));
-
         tree.FlushDeferredQueue();
-        tree.FlushDeferredQueue();
-        
         Assert.Fail();
     }
-}
-
-public class UseEffectTests
-{
+    
     [Test]
-    // so it is not called without tree::FlushQueue
-    public void UseEffectIsDeferred()
+    public void PortalIsDeferred()
     {
         var tree = new Tree();
-        
+
         tree.Build(new ComponentFunc(self =>
         {
-            self.UseEffect(() =>
-            {
-                Assert.Fail();
-            });
-            
-            return [];
+            self.SetName("root");
+            return
+            [
+                new Portal("/root/remote-parent".AsNodePathLocator())
+                {
+                    new ComponentFunc(self =>
+                    {
+                        self.OnMount(Assert.Fail);
+                        return [];
+                    })
+                }
+            ];
         }));
-        
         Assert.Pass();
-    }
-    
-    [Test]
-    // so it is called first time after tree::FlushQueue
-    public void UseEffectIsDeferred2()
-    {
-        var tree = new Tree();
-        
-        tree.Build(new ComponentFunc(self =>
-        {
-            self.UseEffect(() =>
-            {
-                Assert.Pass();
-            });
-            
-            return [];
-        }));
-        
-        tree.FlushDeferredQueue();
-        
-        Assert.Fail();
-    }
-    
-    [Test]
-    // so it is not triggered without tree::FlushQueue
-    public void UseEffectIsDeferred3()
-    {
-        var tree = new Tree();
-        
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(0);
-            
-            self.UseEffect(call =>
-            {
-                signal.Track();
-                if (call == 2)
-                {
-                    Assert.Fail();
-                }
-                return call + 1;
-            }, 1);
-            
-            return [];
-        }));
-        
-        tree.FlushDeferredQueue();
-        signal!.Value = 2;
-        Assert.Pass();
-    }
-    
-    [Test]
-    // so it is triggered after tree::FlushQueue
-    public void UseEffectIsDeferred4()
-    {
-        var tree = new Tree();
-        
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(0);
-            
-            self.UseEffect(call =>
-            {
-                signal.Track();
-                if (call == 2)
-                {
-                    Assert.Pass();
-                }
-                return call + 1;
-            }, 1);
-            
-            return [];
-        }));
-        
-        tree.FlushDeferredQueue();
-        signal!.Value = 2;
-        tree.FlushDeferredQueue();
-        Assert.Fail();
-    }
-}
-
-public class CreateSignalTests
-{
-    [Test]
-    public void Smoke()
-    {
-        var tree = new Tree();
-
-        var effectCalls = 0;
-        var reactive = new TestReactive<int>(0);
-        tree.Build(new ComponentFunc(self =>
-        {
-            var createdSignal = self.CreateSignal(set =>
-            {
-                var trigger = () => set(reactive);
-                reactive.Changed += trigger; 
-                return () =>
-                {
-                    reactive.Changed -= trigger;
-                };
-            }, reactive);
-            
-            self.UseEffect(() =>
-            {
-                createdSignal.Track();
-                effectCalls++;
-            });
-            
-            return [];
-        }));
-
-        tree.FlushDeferredQueue();
-        reactive.Set(2);
-        tree.FlushDeferredQueue();
-        Assert.That(effectCalls, Is.EqualTo(2));
-    }
-    
-    [Test]
-    public void CleanupIsCalled()
-    {
-        var tree = new Tree();
-
-        tree.Build(new ComponentFunc(self =>
-        {
-            var createdSignal = self.CreateSignal(set =>
-            {
-                return () =>
-                {
-                    Assert.Pass();
-                };
-            }, 0);
-            
-            return [];
-        }));
-
-        tree.Free();
-        Assert.Fail();
-    }
-
-    public class TestReactive<T>(T initial)
-    {
-        public Action? Changed;
-        
-        private T _value = initial;
-        
-        public T Get()
-        {
-            return _value;
-        }
-
-        public void Set(T value)
-        {
-            _value = value;
-            Changed?.Invoke();
-        }
-    }
-}
-
-public class UseComputedTests
-{
-    [Test]
-    public void ComputedIsCalledAsSoonCreated()
-    {
-        var tree = new Tree();
-        
-        tree.Build(new ComponentFunc(self =>
-        {
-            self.UseComputed(() =>
-            {
-                Assert.Pass();
-            });
-            
-            return [];
-        }));
-        
-        Assert.Fail();
-    }
-    
-    [Test]
-    public void ComputedIsCalledAsSoonTriggered()
-    {
-        var tree = new Tree();
-        
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(0);
-            
-            self.UseComputed(calls =>
-            {
-                signal.Track();
-
-                if (calls == 2)
-                {
-                    Assert.Pass();
-                }
-                
-                return calls + 1;
-            }, 1);
-            
-            return [];
-        }));
-        
-        signal!.Value = 2;
-        Assert.Fail();
     }
 }
 
@@ -493,58 +281,6 @@ public class CallDeferredTests
     }
 }
 
-public class UseMemoTests
-{
-    [Test]
-    public void Smoke()
-    {
-        var tree = new Tree();
-        ISignalMut<int>? counter = null;
-        var useMemoCalls = 0;
-        var useEffectCalls = 0;
-        
-        tree.Build(new ComponentFunc(self =>
-        {
-            counter = self.UseSignal(0);
-            var doubleCounter = self.UseMemo(
-                _ =>
-                {
-                    useMemoCalls++;
-                    return counter.Value * 2;
-                }, 
-                counter.Value
-            );
-            
-            self.UseEffect(call =>
-            {
-                doubleCounter.Track();
-                doubleCounter.Track();
-                doubleCounter.Track();
-                var doubleValue = doubleCounter.Value; 
-                if (call == 1)
-                {
-                    Assert.That(doubleValue, Is.EqualTo(0));
-                }
-                if (call == 2)
-                {
-                    Assert.That(doubleValue, Is.EqualTo(2));
-                }
-                useEffectCalls = call;
-                return call + 1;
-            }, 1);
-            
-            return [];
-        }));
-
-        Assert.That(useMemoCalls, Is.EqualTo(1));
-        tree.FlushDeferredQueue();
-        counter!.Value = 1;
-        tree.FlushDeferredQueue();
-        Assert.That(useMemoCalls, Is.EqualTo(2));
-        Assert.That(useEffectCalls, Is.EqualTo(2));
-    }
-}
-
 public class NodeNameTests
 {
     [Test]
@@ -568,9 +304,9 @@ public class NodeNameTests
         });
 
         var a = tree.Root.GetNode(new NodePath("/root/a"))!;
-        Assert.That(a.Name.Value, Is.EqualTo("a"));
+        Assert.That(a.Name, Is.EqualTo("a"));
         a.SetName("b");
-        Assert.That(a.Name.Value, Is.EqualTo("@b@0"));
+        Assert.That(a.Name, Is.EqualTo("@b@0"));
     }
     
     [Test]
@@ -616,172 +352,9 @@ public class NodeNameTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(a.Name.Value, Is.EqualTo("a"));
-            Assert.That(a2.Name.Value, Is.EqualTo("@a@1"));
+            Assert.That(a.Name, Is.EqualTo("a"));
+            Assert.That(a2.Name, Is.EqualTo("@a@1"));
         });
-    }
-    
-    [Test]
-    public void TestNodeNameReactivity()
-    {
-        var tree = new Tree();
-        Action? rename = null;
-        
-        tree.Build(new Component
-        {
-            Name = "root",
-            Children = [
-                new ComponentFunc(self =>
-                {
-                    rename = () => self.SetName("test");
-                    
-                    self.UseEffect(call =>
-                    {
-                        var name = self.Name.Value;
-                        if (call == 2)
-                        {
-                            Assert.That(name, Is.EqualTo("test"));
-                            Assert.Pass(); 
-                        }
-                        return call + 1;
-                    }, 1);
-                    
-                    return [];
-                })
-                {
-                    Name = "a",
-                },
-            ]
-        });
-        
-        tree.FlushDeferredQueue();
-        rename?.Invoke();
-        tree.FlushDeferredQueue();
-        Assert.Fail();
-    }
-    
-    [Test]
-    public void TestNodeRenameDoesNotTriggerUseEffectTwice()
-    {
-        var tree = new Tree();
-        Action? rename = null;
-
-        var totalCalls = 0;
-        
-        tree.Build(new Component
-        {
-            Name = "root",
-            Children = [
-                new ComponentFunc(self =>
-                {
-                    rename = () => self.SetName("b");
-                    
-                    self.UseEffect(() =>
-                    {
-                        self.Name.Track();
-                        totalCalls += 1;
-                    });
-                    
-                    return [];
-                })
-                {
-                    Name = "a",
-                },
-                new Component()
-                {
-                    Name = "b",
-                }
-            ]
-        });
-        
-        tree.FlushDeferredQueue();
-        rename?.Invoke();
-        tree.FlushDeferredQueue();
-        Assert.That(totalCalls, Is.EqualTo(2));
-    }
-}
-
-public class UseSignalTests
-{
-    [Test]
-    public void SignalDoNotEmitIfValueIsNotChanged()
-    {
-        var tree = new Tree();
-
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(1);
-            
-            self.UseComputed(calls =>
-            {
-                signal.Track();
-                if (calls == 2)
-                {
-                    Assert.Fail();
-                }
-                return calls + 1;
-            }, 1);
-            
-            return [];
-        }));
-
-        signal!.Value = 1;
-        Assert.Pass();
-    }
-    
-    [Test]
-    public void SignalEmitsIfValueIsNotChangedButEqualsIsFalse()
-    {
-        var tree = new Tree();
-
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(1).WithEquals(new SignalValueEquals.Const<int>(false));
-            
-            self.UseComputed(calls =>
-            {
-                signal.Track();
-                if (calls == 2)
-                {
-                    Assert.Pass();
-                }
-                return calls + 1;
-            }, 1);
-            
-            return [];
-        }));
-
-        signal!.Value = 1;
-        Assert.Fail();
-    }
-    
-    [Test]
-    public void SignalEmitsIfValueIsNotChangedButEqualsIsNull()
-    {
-        var tree = new Tree();
-
-        ISignalMut<int>? signal = null;
-        tree.Build(new ComponentFunc(self =>
-        {
-            signal = self.UseSignal(1, equals: null);
-            
-            self.UseComputed(calls =>
-            {
-                signal.Track();
-                if (calls == 2)
-                {
-                    Assert.Pass();
-                }
-                return calls + 1;
-            }, 1);
-            
-            return [];
-        }));
-
-        signal!.Value = 1;
-        Assert.Fail();
     }
 }
 
@@ -814,30 +387,30 @@ public class NodePathTests
         });
         
         Assert.That(
-            tree.Root.GetNode(new NodePath("/root"))!.Name.Value,
+            tree.Root.GetNode(new NodePath("/root"))!.Name,
             Is.EqualTo("root")
         );
         
         Assert.That(
-            tree.Root.GetNode(new NodePath("/root/a"))!.Name.Value,
+            tree.Root.GetNode(new NodePath("/root/a"))!.Name,
             Is.EqualTo("a")
         );
 
         var a = tree.Root.GetNode(new NodePath("/root/a"))!;
         Assert.That(
-            a.GetNode(new NodePath(".."))!.Name.Value,
+            a.GetNode(new NodePath(".."))!.Name,
             Is.EqualTo("root")
         );
         Assert.That(
-            a.GetNode(new NodePath("../b"))!.Name.Value,
+            a.GetNode(new NodePath("../b"))!.Name,
             Is.EqualTo("b")
         );
         Assert.That(
-            a.GetNode(new NodePath("."))!.Name.Value,
+            a.GetNode(new NodePath("."))!.Name,
             Is.EqualTo("a")
         );
         Assert.That(
-            a.GetNode(new NodePath("./c"))!.Name.Value,
+            a.GetNode(new NodePath("./c"))!.Name,
             Is.EqualTo("c")
         );
     }
@@ -988,4 +561,180 @@ public class CallbacksTests
     }
 
     private readonly record struct TestCallback(int Value);
+}
+
+public class SignalTests
+{
+    [Test]
+    public void UseSignalIsAutoCleanup()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Fail();
+                })
+            );
+
+            return [];
+        }));
+        tree.Free();
+        signal.Emit();
+        Assert.Pass();
+    }
+    
+    [Test]
+    public void UseSignalDeferred()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Fail();
+                }).Deferred(self)
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        Assert.Pass();
+    }
+    
+    [Test]
+    public void UseSignalDeferred__Opposite()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Pass();
+                }).Deferred(self)
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        tree.FlushDeferredQueue();
+        Assert.Fail();
+    }
+    
+    [Test]
+    public void UseSignalOneShot()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+        var calls = 0;
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    calls++;
+                }).OneShot()
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        Assert.That(calls, Is.EqualTo(1));;
+    }
+    
+    [Test]
+    public void UseSignalOneShot__Opposite()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+        var calls = 0;
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    calls++;
+                })
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        Assert.That(calls, Is.EqualTo(4));;
+    }
+    
+    [Test]
+    public void UseSignalThrottled()
+    {
+        var tree = new Tree();
+        var signal = new Signal<int>();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<int>(v =>
+                {
+                    Assert.That(v, Is.EqualTo(4));
+                    Assert.Pass();
+                }).Throttled(self)
+            );
+
+            return [];
+        }));
+        signal.Emit(1);
+        signal.Emit(2);
+        signal.Emit(3);
+        signal.Emit(4);
+        tree.FlushDeferredQueue();
+        Assert.Fail();
+    }
+    
+    [Test]
+    public void UseSignalThrottledIsDeferred()
+    {
+        var tree = new Tree();
+        var signal = new Signal<int>();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<int>(v =>
+                {
+                    Assert.That(v, Is.EqualTo(4));
+                    Assert.Fail();
+                }).Throttled(self)
+            );
+
+            return [];
+        }));
+        signal.Emit(1);
+        signal.Emit(2);
+        signal.Emit(3);
+        signal.Emit(4);
+        Assert.Pass();
+    }
 }

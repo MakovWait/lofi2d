@@ -2,27 +2,27 @@ namespace Tmp.Core.Comp.Flow;
 
 public class Conditional : Component
 {
-    public required ISignal<bool> When { get; init; }
-
+    public required Signal<bool> When { get; init; }
+    
     protected override Components Init(INodeInit self)
     {
-        self.UseEffect(prev =>
-        {
-            var render = When.Value;
-            if (prev == render) return render;
-            
-            if (render)
-            {
-                CreateChildrenAndMount(Children);   
-            }
-            else
-            {
-                ClearChildren();
-            }
-            
-            return render;
-        }, false);
-        
+        self.UseSignal(
+            When, 
+            new SignalTarget<bool>(Update).Throttled(self)
+        );
+
         return [];
+    }
+    
+    private void Update(bool when)
+    {
+        if (when)
+        {
+            CreateChildrenAndMount(Children);   
+        }
+        else
+        {
+            ClearChildren();
+        }
     }
 }
