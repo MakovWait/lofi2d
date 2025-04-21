@@ -1,5 +1,4 @@
 using System.Collections;
-using R3;
 using Tmp.Core.Comp.Flow;
 
 namespace Tmp.Core.Comp;
@@ -153,7 +152,7 @@ public static class ComponentEx
         return [self];
     }
     
-    public static Conditional If(this IComponent self, Observable<bool> condition)
+    public static Conditional If(this IComponent self, Signal<bool> condition)
     {
         return new Conditional
         {

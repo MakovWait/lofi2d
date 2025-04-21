@@ -562,7 +562,12 @@ public interface INodeLocation
     Node? GetNode(NodePath nodePath);
 }
 
-public interface INodeInit : INodeLocation
+public interface ICallDeferredSource
+{
+    void CallDeferred<T>(Action<T> action, T args);
+}
+
+public interface INodeInit : INodeLocation, ICallDeferredSource
 {
     string Name { get; }
 
@@ -585,8 +590,6 @@ public interface INodeInit : INodeLocation
     void OnLate<T>(Action<T> action);
 
     void SetName(string value);
-
-    void CallDeferred<T>(Action<T> action, T args);
 }
 
 public static class NodeInitEx

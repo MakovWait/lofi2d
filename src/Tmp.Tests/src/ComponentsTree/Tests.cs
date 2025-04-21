@@ -1,4 +1,4 @@
-using R3;
+using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Core.Comp.Flow;
 
@@ -55,7 +55,7 @@ public class ConditionalTests
     [Test]
     public void Smoke()
     {
-        var cond = new ReactiveProperty<bool>(false);
+        var cond = new Signal<bool>();
         var tree = new Tree();
         tree.Build(new ComponentFunc(self =>
         {
@@ -65,7 +65,7 @@ public class ConditionalTests
                 return [];
             }).If(cond);
         }));
-        cond.Value = true;
+        cond.Emit(true);
         tree.FlushDeferredQueue();
         Assert.Fail();
     }
@@ -74,7 +74,7 @@ public class ConditionalTests
     // TODO now it is not checked but should be one day
     public void UpdateIsQueued()
     {
-        var cond = new ReactiveProperty<bool>(false);
+        var cond = new Signal<bool>();
         var tree = new Tree();
         tree.Build(new ComponentFunc(self =>
         {
@@ -84,9 +84,9 @@ public class ConditionalTests
                 return [];
             }).If(cond);
         }));
-        cond.Value = true;
-        cond.Value = false;
-        cond.Value = true;
+        cond.Emit(true);
+        cond.Emit(false);
+        cond.Emit(true);
         tree.FlushDeferredQueue();
         Assert.Fail();
     }
@@ -561,4 +561,180 @@ public class CallbacksTests
     }
 
     private readonly record struct TestCallback(int Value);
+}
+
+public class SignalTests
+{
+    [Test]
+    public void UseSignalIsAutoCleanup()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Fail();
+                })
+            );
+
+            return [];
+        }));
+        tree.Free();
+        signal.Emit();
+        Assert.Pass();
+    }
+    
+    [Test]
+    public void UseSignalDeferred()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Fail();
+                }).Deferred(self)
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        Assert.Pass();
+    }
+    
+    [Test]
+    public void UseSignalDeferred__Opposite()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    Assert.Pass();
+                }).Deferred(self)
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        tree.FlushDeferredQueue();
+        Assert.Fail();
+    }
+    
+    [Test]
+    public void UseSignalOneShot()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+        var calls = 0;
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    calls++;
+                }).OneShot()
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        Assert.That(calls, Is.EqualTo(1));;
+    }
+    
+    [Test]
+    public void UseSignalOneShot__Opposite()
+    {
+        var tree = new Tree();
+        var signal = new Signal();
+        var calls = 0;
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<Empty>(_ =>
+                {
+                    calls++;
+                })
+            );
+
+            return [];
+        }));
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        signal.Emit();
+        Assert.That(calls, Is.EqualTo(4));;
+    }
+    
+    [Test]
+    public void UseSignalThrottled()
+    {
+        var tree = new Tree();
+        var signal = new Signal<int>();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<int>(v =>
+                {
+                    Assert.That(v, Is.EqualTo(4));
+                    Assert.Pass();
+                }).Throttled(self)
+            );
+
+            return [];
+        }));
+        signal.Emit(1);
+        signal.Emit(2);
+        signal.Emit(3);
+        signal.Emit(4);
+        tree.FlushDeferredQueue();
+        Assert.Fail();
+    }
+    
+    [Test]
+    public void UseSignalThrottledIsDeferred()
+    {
+        var tree = new Tree();
+        var signal = new Signal<int>();
+
+        tree.Build(new ComponentFunc(self =>
+        {
+            self.UseSignal(
+                signal, 
+                new SignalTarget<int>(v =>
+                {
+                    Assert.That(v, Is.EqualTo(4));
+                    Assert.Fail();
+                }).Throttled(self)
+            );
+
+            return [];
+        }));
+        signal.Emit(1);
+        signal.Emit(2);
+        signal.Emit(3);
+        signal.Emit(4);
+        Assert.Pass();
+    }
 }

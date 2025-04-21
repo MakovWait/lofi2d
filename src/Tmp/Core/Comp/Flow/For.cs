@@ -8,25 +8,18 @@ public class For<T> : Component where T : For<T>.IItem
     public required ReactiveList<T> In { get; init; }
 
     public required Func<T, int, IComponent> Render { get; init; }
-
-    private bool _queuedToUpdate;
     
     protected override Components Init(INodeInit self)
     {
         Dictionary<string, Node> nodes = new();
         Dictionary<string, Node> nodesCopy = new();
 
-        In.Changed += UpdateDeferred;
-        self.OnCleanup(() => In.Changed -= UpdateDeferred);
+        self.UseSignal(
+            In.Changed,
+            new SignalTarget(Update).Throttled(self)
+        );
 
         return [];
-    
-        void UpdateDeferred()
-        {
-            if (_queuedToUpdate) return;
-            _queuedToUpdate = true;
-            self.CallDeferred(Update);
-        }
         
         void Update()
         {
@@ -61,8 +54,6 @@ public class For<T> : Component where T : For<T>.IItem
                 node.Free();
             }
             nodesCopy.Clear();
-            
-            _queuedToUpdate = false;
         }
         
         void RegisterNode(string key, Node node)
@@ -80,7 +71,7 @@ public class For<T> : Component where T : For<T>.IItem
 
 public class ReactiveList<T> : IEnumerable<T>
 {
-    public event Action? Changed;
+    public readonly Signal Changed = new();
 
     private readonly List<T> _items = [];
 
@@ -89,19 +80,19 @@ public class ReactiveList<T> : IEnumerable<T>
     public void Add(T item)
     {
         _items.Add(item);
-        Changed?.Invoke();
+        Changed.Emit();
     }
         
     public void Remove(T item)
     {
         _items.Remove(item);
-        Changed?.Invoke();
+        Changed.Emit();
     }
     
     public void Clear()
     {
         _items.Clear();
-        Changed?.Invoke();
+        Changed.Emit();
     }
     
     public List<T>.Enumerator GetEnumerator()
