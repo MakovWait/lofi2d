@@ -160,6 +160,11 @@ public static class ComponentEx
             Children = self.AsChildren()
         };
     }
+    
+    public static Conditional If(this IComponent self, bool condition)
+    {
+        return self.If(new Signal<bool>(condition));
+    }
 }
 
 public interface IComponent
