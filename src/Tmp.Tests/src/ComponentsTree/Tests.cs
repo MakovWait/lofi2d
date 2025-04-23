@@ -92,7 +92,7 @@ public class ConditionalTests
     }
 }
 
-public class ForTests
+public class CForTests
 {
     [Test]
     // TODO now it is not checked but should be one day
@@ -103,9 +103,9 @@ public class ForTests
         var items = new ReactiveList<Item>();
         tree.Build(new ComponentFunc(self =>
         {
-            return new For<Item>
+            return new CFor<Item>
             {
-                In = items,
+                In = items.Changed,
                 ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {
@@ -129,9 +129,9 @@ public class ForTests
         var items = new ReactiveList<Item>();
         tree.Build(new ComponentFunc(self =>
         {
-            return new For<Item>
+            return new CFor<Item>
             {
-                In = items,
+                In = items.Changed,
                 ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {
@@ -158,9 +158,9 @@ public class ForTests
         var items = new ReactiveList<Item>();
         tree.Build(new ComponentFunc(self =>
         {
-            return new For<Item>
+            return new CFor<Item>
             {
-                In = items,
+                In = items.Changed,
                 ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {

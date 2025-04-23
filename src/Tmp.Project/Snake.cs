@@ -13,21 +13,71 @@ namespace Tmp.Project;
 
 public class Snake
 {
-    public SnakeHead Head { get; } = new();
+    public Head Head { get; } = new();
+    public Signal<IReadOnlyList<BodyPart>> BodyPartsChanged => _bodyParts.Changed;
     
-    public readonly ReactiveList<BodyPart> BodyParts = [];
+    private readonly ReactiveList<BodyPart> _bodyParts = [];
 
     public void AddBodyPart()
     {
-        BodyParts.Add(new BodyPart(Guid.NewGuid().ToString())
+        var key = Guid.NewGuid().ToString();
+        _bodyParts.Add(new BodyPart(key)
         {
-            Rotation = 0,
-            Position = Head.Transform.Origin
+            Position = Head.Transform.Origin,
+            Rotation = Head.Transform.Rotation,       
         });
+    }
+    
+    public void CheckHeadAndBodyCollisions()
+    {
+        var shouldRemove = false;
+        foreach (var bodyPart in _bodyParts)
+        {
+            if (bodyPart.Collides(Head))
+            {
+                shouldRemove = true;
+            }
+
+            if (shouldRemove)
+            {
+                _bodyParts.QueueRemove(bodyPart);
+            }
+        }
+        _bodyParts.FlushRemoveQueue();
+    }
+    
+    public void SyncBodyPartsMovement()
+    {
+        for (var i = 0; i < _bodyParts.Count; i++)
+        {
+            var part = _bodyParts[i];
+            var targetDistance = (i + 1) * 10.4f;
+            var distanceSum = 0.0f;
+
+            var prevPoint = Head.CurrentPosition;
+            LastPosition? targetPoint = null;
+            for (var j = 0; j < Head.LastPositions.Count; j++)
+            {
+                var currentPoint = Head.LastPositions[j];
+                var d = prevPoint.Position.DistanceTo(currentPoint.Position);
+                distanceSum += d;
+                if (distanceSum >= targetDistance)
+                {
+                    targetPoint = Head.LastPositions.GetPrevSafe(j) ?? currentPoint;
+                    break;
+                }
+                prevPoint = currentPoint;
+            }
+            if (targetPoint.HasValue)
+            {
+                part.Position = targetPoint.Value.Position;
+                part.Rotation = targetPoint.Value.Rotation;
+            }
+        }
     }
 }
 
-public class SnakeHead
+public class Head
 {
     public Transform2D Transform { get; set; }
 
@@ -40,80 +90,6 @@ public class SnakeHead
     public LastPositions LastPositions { get; } = new();
 }
 
-public class CSnake : Component
-{
-    protected override Components Init(INodeInit self)
-    {
-        var snake = self.UseContext<Snake>();
-        var head = snake.Head;
-        var bodyParts = snake.BodyParts;
-        
-        self.OnLate<Update>(dt =>
-        {
-            SyncBodyPartsMovement();
-            CheckHeadAndBodyCollisions();
-        });
-        
-        return [
-            new CHead(),
-            new For<BodyPart>
-            {
-                In = bodyParts,
-                ItemKey = item => item.Key,
-                Render = (part, _) => new CBodyPart(part)
-            },
-        ];
-
-        void CheckHeadAndBodyCollisions()
-        {
-            var shouldRemove = false;
-            foreach (var bodyPart in bodyParts)
-            {
-                if (bodyPart.Collides(head))
-                {
-                    shouldRemove = true;
-                }
-
-                if (shouldRemove)
-                {
-                    bodyParts.QueueRemove(bodyPart);
-                }
-            }
-            bodyParts.FlushRemoveQueue();
-        }
-        
-        void SyncBodyPartsMovement()
-        {
-            for (var i = 0; i < bodyParts.Count; i++)
-            {
-                var part = bodyParts.Get(i);
-                var targetDistance = (i + 1) * 10.4f;
-                var distanceSum = 0.0f;
-
-                var prevPoint = head.CurrentPosition;
-                LastPosition? targetPoint = null;
-                for (var j = 0; j < head.LastPositions.Count; j++)
-                {
-                    var currentPoint = head.LastPositions[j];
-                    var d = prevPoint.Position.DistanceTo(currentPoint.Position);
-                    distanceSum += d;
-                    if (distanceSum >= targetDistance)
-                    {
-                        targetPoint = head.LastPositions.GetPrevSafe(j) ?? currentPoint;
-                        break;
-                    }
-                    prevPoint = currentPoint;
-                }
-                if (targetPoint.HasValue)
-                {
-                    part.Position = targetPoint.Value.Position;
-                    part.Rotation = targetPoint.Value.Rotation;
-                }
-            }
-        }
-    }
-}
-
 public class BodyPart(string key)
 {
     public string Key { get; } = key;
@@ -122,9 +98,33 @@ public class BodyPart(string key)
     
     public Radians Rotation { get; set; }
 
-    public bool Collides(SnakeHead head)
+    public bool Collides(Head head)
     {
         return Position.DistanceSquaredTo(head.Transform.Origin) <= 4 * 4;
+    }
+}
+
+public class CSnake : Component
+{
+    protected override Components Init(INodeInit self)
+    {
+        var snake = self.UseContext<Snake>();
+        
+        self.OnLate<Update>(_ =>
+        {
+            snake.SyncBodyPartsMovement();
+            snake.CheckHeadAndBodyCollisions();
+        });
+        
+        return [
+            new CHead(),
+            new CFor<BodyPart>
+            {
+                In = snake.BodyPartsChanged,
+                ItemKey = item => item.Key,
+                Render = (part, _) => new CBodyPart(part)
+            },
+        ];
     }
 }
 

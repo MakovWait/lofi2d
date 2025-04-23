@@ -3,9 +3,9 @@ using System.Diagnostics;
 
 namespace Tmp.Core.Comp.Flow;
 
-public class For<T> : Component
+public class CFor<T> : Component
 {
-    public required ReactiveList<T> In { get; init; }
+    public required Signal<IReadOnlyList<T>> In { get; init; }
 
     public required Func<T, string> ItemKey { get; init; }
     
@@ -17,26 +17,24 @@ public class For<T> : Component
         Dictionary<string, Node> nodesCopy = new();
 
         self.UseSignal(
-            In.Changed,
-            new SignalTarget(Update).Throttled(self)
+            In,
+            new SignalTarget<IReadOnlyList<T>>(Update).Throttled(self)
         );
 
         return [];
         
-        void Update()
+        void Update(IReadOnlyList<T> items)
         {
-            var items = In;
-            
             foreach (var node in nodes)
             {
                 nodesCopy.Add(node.Key, node.Value);
                 Self.RemoveChild(node.Value);
             }
             nodes.Clear();
-        
-            var idx = 0;
-            foreach (var item in items)
+
+            for (var i = 0; i < items.Count; i++)
             {
+                var item = items[i];
                 if (nodesCopy.TryGetValue(ItemKey(item), out var n))
                 {
                     RegisterNode(ItemKey(item), n);
@@ -45,10 +43,9 @@ public class For<T> : Component
                 }
                 else
                 {
-                    var node = CreateChildAndMount(Render(item, idx));
+                    var node = CreateChildAndMount(Render(item, i));
                     RegisterNode(ItemKey(item), node);
                 }
-                idx++;
             }
         
             foreach (var node in nodesCopy.Values)
@@ -68,22 +65,19 @@ public class For<T> : Component
 
 public class ReactiveList<T> : IEnumerable<T>
 {
-    public readonly Signal Changed = new();
+    public readonly Signal<IReadOnlyList<T>> Changed = new();
 
     private readonly List<T> _items = [];
     private readonly List<T> _queuedToRemove = [];
 
     public int Count => _items.Count;
 
-    public T Get(int idx)
-    {
-        return _items[idx];
-    }
+    public T this[int idx] => _items[idx];
     
     public void Add(T item)
     {
         _items.Add(item);
-        Changed.Emit();
+        EmitChanged();
     }
 
     public void QueueRemove(T item)
@@ -98,19 +92,19 @@ public class ReactiveList<T> : IEnumerable<T>
             _items.Remove(item);
         }
         _queuedToRemove.Clear();
-        Changed.Emit();
+        EmitChanged();
     }
     
     public void Remove(T item)
     {
         _items.Remove(item);
-        Changed.Emit();
+        EmitChanged();
     }
     
     public void Clear()
     {
         _items.Clear();
-        Changed.Emit();
+        EmitChanged();
     }
     
     public List<T>.Enumerator GetEnumerator()
@@ -126,5 +120,10 @@ public class ReactiveList<T> : IEnumerable<T>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    private void EmitChanged()
+    {
+        Changed.Emit(_items);
     }
 }

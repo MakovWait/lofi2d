@@ -35,9 +35,9 @@ public class CFood : Component
             }
         });
 
-        return new For<FoodItem>()
+        return new CFor<FoodItem>()
         {
-            In = items,
+            In = items.Changed,
             ItemKey = item => item.Key,
             Render = (item, _) => new CFoodItem(item)
         };
