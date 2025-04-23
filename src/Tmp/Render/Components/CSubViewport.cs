@@ -15,7 +15,7 @@ public class CSubViewport(CSubViewport.Props props) : ComponentFunc((self, child
     );
     viewport.BindTo(self);
     
-    self.CreateContext(new СNode2DTransform
+    self.CreateContext(new CNode2DTransform
     {
         Local = Transform2D.Identity
     });

@@ -76,13 +76,18 @@ public class ReactiveList<T> : IEnumerable<T>
     private readonly List<T> _items = [];
 
     public int Count => _items.Count;
+
+    public T Get(int idx)
+    {
+        return _items[idx];
+    }
     
     public void Add(T item)
     {
         _items.Add(item);
         Changed.Emit();
     }
-        
+
     public void Remove(T item)
     {
         _items.Remove(item);

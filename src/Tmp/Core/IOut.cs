@@ -7,7 +7,8 @@ public interface IOut<T> : IScalar<T>
     void Init(T value);
 }
 
-internal class Out<T> : IOut<T>
+// TODO dispose
+public class Out<T> : IOut<T>
 {
     public T Value { get; private set; }
     private bool _initialized;

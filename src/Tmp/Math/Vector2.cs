@@ -507,7 +507,7 @@ public struct Vector2 : IEquatable<Vector2>
     /// </summary>
     /// <param name="angle">The angle to rotate by, in radians.</param>
     /// <returns>The rotated vector.</returns>
-    public readonly Vector2 Rotated(float angle)
+    public readonly Vector2 Rotated(Radians angle)
     {
         (float Sin, float Cos) = Mathf.SinCos(angle);
         return new Vector2((float)((double)this.X * (double)Cos - (double)this.Y * (double)Sin), (float)((double)this.X * (double)Sin + (double)this.Y * (double)Cos));

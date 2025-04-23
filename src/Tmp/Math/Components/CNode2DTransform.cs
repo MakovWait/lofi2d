@@ -6,7 +6,7 @@ public class CNode2DTransformRoot : Component
 {
     protected override Core.Comp.Components Init(INodeInit self)
     {
-        self.CreateContext(new СNode2DTransform
+        self.CreateContext(new CNode2DTransform
         {
             Local = Transform2D.Identity
         });
@@ -15,9 +15,9 @@ public class CNode2DTransformRoot : Component
     }
 }
 
-public sealed class СNode2DTransform : INode2DTransform
+public sealed class CNode2DTransform : INode2DTransform
 {
-    private СNode2DTransform? _parent;
+    private CNode2DTransform? _parent;
     private Transform2D _transform = Transform2D.Identity;
     private Transform2D _globalTransform = Transform2D.Identity;
     private bool _isXFormDirty = true;
@@ -87,6 +87,16 @@ public sealed class СNode2DTransform : INode2DTransform
         set => SetGlobalRotation(value);
     }
 
+    public Vector2 ToGlobal(Vector2 position)
+    {
+        return Global.Xform(position);
+    }
+    
+    public Vector2 ToLocal(Vector2 position)
+    {
+        return Global.AffineInverse().Xform(position);
+    }
+    
     private void SetGlobalPosition(Vector2 value)
     {
         if (_parent != null)
@@ -285,7 +295,7 @@ public sealed class СNode2DTransform : INode2DTransform
         _transform = new Transform2D(_rotation, _scale, _skew, _position);
     }
 
-    void INode2DTransform.AddTo(СNode2DTransform transform)
+    void INode2DTransform.AddTo(CNode2DTransform transform)
     {
         _parent = transform;
         _isGlobalInvalid = true;
@@ -300,22 +310,22 @@ public sealed class СNode2DTransform : INode2DTransform
 
 internal interface INode2DTransform
 {
-    internal void AddTo(СNode2DTransform transform);
+    internal void AddTo(CNode2DTransform transform);
 
     internal void ClearParent();
 }
 
 public static class NodeTransformExtensions
 {
-    public static СNode2DTransform UseParentTransform2D(this INodeInit self)
+    public static CNode2DTransform UseParentTransform2D(this INodeInit self)
     {
-        return self.UseContext<СNode2DTransform>();
+        return self.UseContext<CNode2DTransform>();
     }
     
-    public static СNode2DTransform UseTransform2D(this INodeInit self, Transform2D? initial = null)
+    public static CNode2DTransform UseTransform2D(this INodeInit self, Transform2D? initial = null)
     {
         var parentTransform = self.UseParentTransform2D();
-        var transform = new СNode2DTransform { Local = initial ?? Transform2D.Identity };
+        var transform = new CNode2DTransform { Local = initial ?? Transform2D.Identity };
         var transformCtx = self.CreateContext(transform);
         
         ((INode2DTransform)transformCtx).AddTo(parentTransform);
