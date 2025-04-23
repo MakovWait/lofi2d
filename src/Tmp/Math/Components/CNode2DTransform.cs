@@ -123,7 +123,7 @@ public sealed class CNode2DTransform : INode2DTransform
             var newTransform = parentGlobalTransform * _transform;
             newTransform = new Transform2D(value, newTransform.Scale, newTransform.Skew, newTransform.Origin);
             newTransform = parentGlobalTransform.AffineInverse() * newTransform;
-            SetRotation(newTransform.Skew);
+            SetRotation(newTransform.Rotation);
         }
         else
         {
