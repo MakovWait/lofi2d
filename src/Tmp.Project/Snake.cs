@@ -159,7 +159,8 @@ public class CHead : Component
     {
         var dir = Vector2.Up;
         Radians rotationSpeed = (1.66f * Mathf.Pi);
-        const int speed = 60;
+        const float speed = 60f;
+        const float speedMul = 1.75f;
         const int radius = 6;
         
         var savePositionsTimer = new Timer(0.1f);
@@ -188,10 +189,16 @@ public class CHead : Component
             {
                 dir = dir.Rotated(rotationSpeed * dt);
             }
+            
+            var resultSpeed = speed;
+            if (input.IsKeyPressed(KeyboardKey.Space))
+            {
+                resultSpeed *= speedMul;    
+            }
 
             dir = bounds.CheckBounce(transform.GlobalPosition, dir, radius);
 
-            transform.GlobalPosition += dir.Normalized() * speed * dt;
+            transform.GlobalPosition += dir.Normalized() * resultSpeed * dt;
             transform.GlobalRotation = dir.Angle();
 
             head.Transform = transform.Global;
