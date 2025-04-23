@@ -10,6 +10,8 @@ public class Conditional : Component
             When, 
             new SignalTarget<bool>(Update).Throttled(self)
         );
+        // TODO fix
+        When.Emit(When.Value);
 
         return [];
     }

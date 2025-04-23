@@ -7,9 +7,7 @@ namespace Tmp.Render.Components;
 
 public class CCamera2D : Component
 {
-    public float Width { get; init; }
-    
-    public float Height { get; init; }
+    public Vector2 Offset { get; init; }
     
     public Transform2D? InitialTransform { get; init; }
 
@@ -21,7 +19,7 @@ public class CCamera2D : Component
          self.On<PreDraw>(_ =>
          {
              camera.Target = transform.GlobalPosition;
-             camera.Offset = new Vector2(Width, Height);
+             camera.Offset = Offset;
          });
          
          return Children;

@@ -74,6 +74,7 @@ public class ReactiveList<T> : IEnumerable<T>
     public readonly Signal Changed = new();
 
     private readonly List<T> _items = [];
+    private readonly List<T> _queuedToRemove = [];
 
     public int Count => _items.Count;
 
@@ -88,6 +89,21 @@ public class ReactiveList<T> : IEnumerable<T>
         Changed.Emit();
     }
 
+    public void QueueRemove(T item)
+    {
+        _queuedToRemove.Add(item);
+    }
+
+    public void FlushRemoveQueue()
+    {
+        foreach (var item in _queuedToRemove)
+        {
+            _items.Remove(item);
+        }
+        _queuedToRemove.Clear();
+        Changed.Emit();
+    }
+    
     public void Remove(T item)
     {
         _items.Remove(item);
