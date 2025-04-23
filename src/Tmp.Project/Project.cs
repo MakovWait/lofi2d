@@ -1,11 +1,13 @@
 ﻿using Raylib_cs;
 using Tmp.Asset;
+using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Asset.Components;
 using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Core.Comp.Flow;
 using Tmp.Math;
 using Tmp.Math.Components;
+using Tmp.Render;
 using Tmp.Render.Components;
 using Tmp.Window.Components;
 using Timer = Tmp.Time.Timer;
@@ -39,10 +41,6 @@ public static class Project
                         Width = 640/2f,
                         Height = 360f/2
                     },
-                    new Component()
-                    {
-                        Name = "BulletsContainer"
-                    },
                     new CSnake(),
                 }
             }
@@ -54,10 +52,8 @@ public class CSnake : Component
 {
     protected override Components Init(INodeInit self)
     {
-        const int spacing = 8;
+        var headRef = new Out<CHead.Ref>();
         var bodyParts = new ReactiveList<BodyPart>();
-        var headPositions = new Out<List<Vector2>>();
-        var headTransform = new Out<CNode2DTransform>();
         
         self.OnMount(() =>
         {
@@ -69,57 +65,13 @@ public class CSnake : Component
         
         self.OnLate<Update>(dt =>
         {
-            for (var i = 0; i < bodyParts.Count; i++)
-            {
-                var part = bodyParts.Get(i);
-                var targetDistance = (i + 1) * 16f;
-                var distanceSum = 0.0f;
-
-                var prevPoint = headTransform.Value.GlobalPosition;
-                Vector2? targetPoint = null;
-                for (var j = 0; j < headPositions.Value.Count; j++)
-                {
-                    var currentPoint = headPositions.Value[j];
-                    var d = prevPoint.DistanceTo(currentPoint);
-                    distanceSum += d;
-                    if (distanceSum >= targetDistance)
-                    {
-                        if (j > 0)
-                        {
-                            targetPoint = headPositions.Value[j - 1];
-                        }
-                        else
-                        {
-                            targetPoint = currentPoint;
-                        }
-                        break;
-                    }
-                    prevPoint = currentPoint;
-                }
-                if (targetPoint.HasValue)
-                {
-                    part.Position = targetPoint.Value;
-                }
-            }
-
-            // var prevPos = headTransform.Value.Position;
-            // foreach (var bodyPart in bodyParts)
-            // {
-            //     var dir = (prevPos - bodyPart.Position).Normalized();
-            //     var dist = prevPos.DistanceTo(bodyPart.Position);
-            //     if (dist > spacing)
-            //     {
-            //         bodyPart.Position += dir * (dist - spacing);
-            //     }
-            //     prevPos = bodyPart.Position;
-            // }
+            SyncBodyPartsMovement();
         });
         
         return [
             new CHead()
             {
-                OutPositions = headPositions,
-                OutTransform = headTransform,
+                OutRef = headRef
             },
             new For<BodyPart>
             {
@@ -127,6 +79,36 @@ public class CSnake : Component
                 Render = (part, _) => new CBodyPart(part)
             },
         ];
+
+        void SyncBodyPartsMovement()
+        {
+            for (var i = 0; i < bodyParts.Count; i++)
+            {
+                var part = bodyParts.Get(i);
+                var targetDistance = (i + 1) * 10.4f;
+                var distanceSum = 0.0f;
+
+                var prevPoint = headRef.Value!.CurrentPosition;
+                LastPosition? targetPoint = null;
+                for (var j = 0; j < headRef.Value.LastPositions.Count; j++)
+                {
+                    var currentPoint = headRef.Value.LastPositions[j];
+                    var d = prevPoint.Position.DistanceTo(currentPoint.Position);
+                    distanceSum += d;
+                    if (distanceSum >= targetDistance)
+                    {
+                        targetPoint = headRef.Value.LastPositions.GetPrevSafe(j) ?? currentPoint;
+                        break;
+                    }
+                    prevPoint = currentPoint;
+                }
+                if (targetPoint.HasValue)
+                {
+                    part.Position = targetPoint.Value.Position;
+                    part.Rotation = targetPoint.Value.Rotation;
+                }
+            }
+        }
     }
 }
 
@@ -135,6 +117,8 @@ public class BodyPart(string key) : For<BodyPart>.IItem
     public string Key { get; } = key;
     
     public Vector2 Position { get; set; }
+    
+    public Radians Rotation { get; set; }
 }
 
 public class CBodyPart(BodyPart data) : Component
@@ -143,17 +127,19 @@ public class CBodyPart(BodyPart data) : Component
     {
         var transform = self.UseTransform2D();
         var canvasItem = self.UseCanvasItem(transform);
+        var texture = self.UseAsset<ITexture2D>("assets://body_part_texture.jass");
         
         canvasItem.OnDraw(
             ctx =>
             {
-                ctx.DrawRect(new Rect2I(-8, -8, 16, 16), Color.Blue);
+                texture.Value.Draw(ctx, new Vector2(-16, -16), Color.White);
             }
         );
         
         self.On<Update>(dt =>
         {
-            transform.Position = data.Position;
+            transform.GlobalPosition = data.Position;
+            transform.GlobalRotation = data.Rotation;
         });
         
         return base.Init(self);
@@ -162,8 +148,7 @@ public class CBodyPart(BodyPart data) : Component
 
 public class CHead : Component
 {
-    public required IOut<List<Vector2>> OutPositions { get; init; }
-    public required IOut<CNode2DTransform> OutTransform { get; init; }
+    public required IOut<Ref> OutRef { get; init; }
     
     protected override Components Init(INodeInit self)
     {
@@ -172,25 +157,19 @@ public class CHead : Component
         const int speed = 60;
         
         var transform = self.UseTransform2D();
-        OutTransform.Init(transform);
         var canvasItem = self.UseCanvasItem(transform);
         var input = self.UseContext<Input>();
+        var texture = self.UseAsset<ITexture2D>("assets://body_part_texture.jass");
 
-        var positions = new List<Vector2>();
-        OutPositions.Init(positions);
+        var positions = new LastPositions();
         var savePositionsTimer = new Timer(0.1f);
+
+        self.Init(OutRef, new Ref(transform, positions));
 
         canvasItem.OnDraw(
             ctx =>
             {
-                ctx.DrawRect(new Rect2I(-8, -8, 16, 16), Color.White);
-                ctx.DrawLine(Vector2.Zero, dir * 20, Color.Blue);
-                
-                foreach (var position in positions)
-                {
-                    var drawPos = position - transform.GlobalPosition;
-                    ctx.DrawRect(new Rect2I((int)drawPos.X, (int)drawPos.Y, 2, 2), Color.Red);
-                }
+                texture.Value.Draw(ctx, new Vector2(-16, -16), Color.White);
             }
         );
                         
@@ -205,23 +184,103 @@ public class CHead : Component
                 dir = dir.Rotated(rotationSpeed * dt);
             }
             transform.GlobalPosition += dir.Normalized() * dt * speed;
+            transform.GlobalRotation = dir.Angle();
             
             if (savePositionsTimer.Tick(dt))
             {
-                positions.Insert(0, transform.GlobalPosition);
-                if (positions.Count > 256)
+                positions.Add(new LastPosition()
                 {
-                    positions.RemoveAt(positions.Count - 1);
-                }
-                
-                // if (positions.Count > 256)
-                // {
-                //     positions.RemoveAt(0);
-                // }
-                // positions.Add(transform.GlobalPosition);
+                    Position = transform.GlobalPosition,
+                    Rotation = transform.GlobalRotation,
+                });
             }
         });
-                        
-        return [];
+        
+        return [
+            new ComponentFunc(gizmo =>
+            {
+                var gizmoTransform = gizmo.UseTransform2D();
+                var gizmoCanvasItem = gizmo.UseCanvasItem(gizmoTransform);
+            
+                gizmoCanvasItem.OnDraw(
+                    ctx =>
+                    {
+                        ctx.DrawLine(Vector2.Zero, dir * 20, Color.Blue);
+                        positions.Draw(gizmoTransform.GlobalPosition, ctx);
+                    }
+                );
+            
+                gizmo.On<Update>(_ =>
+                {
+                    gizmoTransform.GlobalRotation = 0;
+                });
+            
+                return [];
+            }).If(true)
+        ];
     }
+
+    public class Ref(CNode2DTransform transform, LastPositions positions)
+    {
+        public LastPosition CurrentPosition => new()
+        {
+            Position = transform.GlobalPosition,
+            Rotation = transform.GlobalRotation,
+        };  
+        
+        public LastPositions LastPositions => positions;
+    }
+}
+
+
+public class LastPositions(int maxCount = 256)
+{
+    private readonly List<LastPosition> _positions = [];
+    
+    public LastPosition this[int index] => _positions[index];
+    
+    public int Count => _positions.Count;
+    
+    public LastPosition? GetPrevSafe(int idx)
+    {
+        if (idx > 0)
+        {
+            return this[idx - 1];
+        }
+        else
+        {
+            return null;
+        }
+    }
+    
+    public void Add(LastPosition position)
+    {
+        _positions.Insert(0, position);
+        if (_positions.Count > maxCount)
+        {
+            _positions.RemoveAt(_positions.Count - 1);
+        }
+                
+        // if (_positions.Count > maxCount)
+        // {
+        //     _positions.RemoveAt(0);
+        // }
+        // _positions.Add(position);
+    }
+
+    public void Draw(Vector2 origin, IDrawContext? ctx)
+    {
+        foreach (var position in _positions)
+        {
+            var drawPos = (position.Position - origin) - Vector2.One;
+            ctx.DrawRect(new Rect2I((int)drawPos.X, (int)drawPos.Y, 2, 2), Color.Red);
+        }
+    }
+}
+
+public struct LastPosition
+{
+    public required Vector2 Position { get; init; }
+    
+    public required Radians Rotation { get; init; }
 }
