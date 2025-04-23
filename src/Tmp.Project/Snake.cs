@@ -59,6 +59,7 @@ public class CSnake : Component
             new For<BodyPart>
             {
                 In = bodyParts,
+                ItemKey = item => item.Key,
                 Render = (part, _) => new CBodyPart(part)
             },
         ];
@@ -113,7 +114,7 @@ public class CSnake : Component
     }
 }
 
-public class BodyPart(string key) : For<BodyPart>.IItem
+public class BodyPart(string key)
 {
     public string Key { get; } = key;
     

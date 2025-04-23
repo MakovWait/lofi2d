@@ -3,10 +3,12 @@ using System.Diagnostics;
 
 namespace Tmp.Core.Comp.Flow;
 
-public class For<T> : Component where T : For<T>.IItem
+public class For<T> : Component
 {
     public required ReactiveList<T> In { get; init; }
 
+    public required Func<T, string> ItemKey { get; init; }
+    
     public required Func<T, int, IComponent> Render { get; init; }
     
     protected override Components Init(INodeInit self)
@@ -35,16 +37,16 @@ public class For<T> : Component where T : For<T>.IItem
             var idx = 0;
             foreach (var item in items)
             {
-                if (nodesCopy.TryGetValue(item.Key, out var n))
+                if (nodesCopy.TryGetValue(ItemKey(item), out var n))
                 {
-                    RegisterNode(item.Key, n);
-                    nodesCopy.Remove(item.Key);
+                    RegisterNode(ItemKey(item), n);
+                    nodesCopy.Remove(ItemKey(item));
                     Self.AddChild(n);
                 }
                 else
                 {
                     var node = CreateChildAndMount(Render(item, idx));
-                    RegisterNode(item.Key, node);
+                    RegisterNode(ItemKey(item), node);
                 }
                 idx++;
             }
@@ -61,11 +63,6 @@ public class For<T> : Component where T : For<T>.IItem
             Debug.Assert(!nodes.ContainsKey(key));
             nodes.Add(key, node);
         }
-    }
-
-    public interface IItem
-    {
-        string Key { get; }
     }
 }
 

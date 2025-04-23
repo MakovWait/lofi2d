@@ -38,6 +38,7 @@ public class CFood : Component
         return new For<FoodItem>()
         {
             In = items,
+            ItemKey = item => item.Key,
             Render = (item, _) => new CFoodItem(item)
         };
 
@@ -51,7 +52,7 @@ public class CFood : Component
     }
 }
 
-public class FoodItem(string key) : For<FoodItem>.IItem
+public class FoodItem(string key)
 {
     public string Key { get; } = key;
 

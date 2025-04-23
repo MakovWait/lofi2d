@@ -106,6 +106,7 @@ public class ForTests
             return new For<Item>
             {
                 In = items,
+                ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {
                     self.OnMount(() => Console.WriteLine(item.Key) );
@@ -131,6 +132,7 @@ public class ForTests
             return new For<Item>
             {
                 In = items,
+                ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {
                     self.OnMount(() =>
@@ -159,6 +161,7 @@ public class ForTests
             return new For<Item>
             {
                 In = items,
+                ItemKey = item => item.Key,
                 Render = (item, _) => new ComponentFunc(self =>
                 {
                     self.OnMount(Assert.Fail);
@@ -171,7 +174,7 @@ public class ForTests
         Assert.Pass();
     }
     
-    private class Item(string key) : For<Item>.IItem
+    private class Item(string key)
     {
         public string Key { get; } = key;
     }
