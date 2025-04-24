@@ -1,23 +1,17 @@
-using Raylib_cs;
 using Tmp.Core.Comp;
 using Tmp.Core.Resource;
 
 namespace Tmp;
 
-public readonly record struct PreUpdate(float Dt)
-{
-    public static implicit operator float(PreUpdate self) => self.Dt;
-}
+public readonly record struct First();
 
-public readonly record struct Update(float Dt)
-{
-    public static implicit operator float(Update self) => self.Dt;
-}
+public readonly record struct Last();
 
-public readonly record struct PostUpdate(float Dt)
-{
-    public static implicit operator float(PostUpdate self) => self.Dt;
-}
+public readonly record struct PreUpdate();
+
+public readonly record struct Update();
+
+public readonly record struct PostUpdate();
 
 public readonly record struct PreDraw;
 public readonly record struct Draw;
@@ -54,13 +48,17 @@ public sealed class App : IRunnableApp, IResources
 
     public void Update()
     {
-        _tree.Call(new PreUpdate(Raylib.GetFrameTime()));
-        _tree.Call(new Update(Raylib.GetFrameTime()));
-        _tree.Call(new PostUpdate(Raylib.GetFrameTime()));
+        _tree.Call<First>();
+        
+        _tree.Call<PreUpdate>();
+        _tree.Call<Update>();
+        _tree.Call<PostUpdate>();
 
         _tree.Call<PreDraw>();
         _tree.Call<Draw>();
         _tree.Call<PostDraw>();
+        
+        _tree.Call<Last>();
         
         _tree.FlushDeferredQueue();
     }

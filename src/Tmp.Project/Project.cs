@@ -4,6 +4,7 @@ using Tmp.Core.Comp;
 using Tmp.Math;
 using Tmp.Math.Components;
 using Tmp.Render.Components;
+using Tmp.Time;
 using Tmp.Window.Components;
 
 namespace Tmp.Project;
@@ -28,18 +29,21 @@ public static class Project
                 TargetFps = 60
             })
             {
-                new CAssets(new Assets())
+                new CTime
                 {
-                    new CNode2DTransformRoot()
+                    new CAssets(new Assets())
                     {
-                        new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
-                        new CCamera2D()
+                        new CNode2DTransformRoot()
                         {
-                            Offset = gameSize / 2
-                        },
-                        new CSnake(),
-                        new CFood(),
-                        new CHud(),
+                            new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
+                            new CCamera2D()
+                            {
+                                Offset = gameSize / 2
+                            },
+                            new CSnake(),
+                            new CFood(),
+                            new CHud(),
+                        }
                     }
                 }
             };

@@ -8,6 +8,7 @@ using Tmp.Math;
 using Tmp.Math.Components;
 using Tmp.Render;
 using Tmp.Render.Components;
+using Tmp.Time;
 
 namespace Tmp.Project;
 
@@ -171,6 +172,7 @@ public class CHead : Component
         var input = self.UseContext<Input>();
         var texture = self.UseAsset<ITexture2D>("assets://body_part_texture.jass");
         var bounds = self.UseContext<Bounds>();
+        var time = self.UseTime();
 
         canvasItem.OnDraw(
             ctx =>
@@ -179,8 +181,10 @@ public class CHead : Component
             }
         );
                         
-        self.On<Update>(dt =>
+        self.On<Update>(_ =>
         {
+            var dt = time.Delta();
+            
             if (input.IsKeyPressed(KeyboardKey.A))
             {
                 dir = dir.Rotated(-rotationSpeed * dt);
