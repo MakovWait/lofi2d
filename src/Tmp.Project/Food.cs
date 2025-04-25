@@ -68,7 +68,7 @@ public class CFoodItem(FoodItem data) : Component
 
         canvasItem.OnDraw(ctx =>
         {
-            ctx.DrawRect(new Rect2I(-8, -8, 16, 16), Color.Red);
+            ctx.DrawRect(new Rect2I(-8, -8, 16, 16), Colors.Red);
         });
 
         return base.Init(self);

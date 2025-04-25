@@ -147,7 +147,7 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
         Rlgl.SetTexture(texture.Id);
         Rlgl.Begin(DrawMode.Quads);
         
-        Rlgl.Color4ub(modulate.R, modulate.G, modulate.B, modulate.A);
+        Rlgl.Color4ub(modulate.R8B, modulate.G8B, modulate.B8B, modulate.A8B);
         Rlgl.Normal3f(0.0f, 0.0f, 1.0f);
         
         if (flipX) Rlgl.TexCoord2f((sourceX + sourceWidth)/width, sourceY/height);

@@ -140,7 +140,7 @@ public class CBodyPart(BodyPart data) : Component
         canvasItem.OnDraw(
             ctx =>
             {
-                texture.Value.Draw(ctx, new Vector2(-16, -16), Color.White);
+                texture.Value.Draw(ctx, new Vector2(-16, -16), Colors.White);
             }
         );
         
@@ -177,7 +177,7 @@ public class CHead : Component
         canvasItem.OnDraw(
             ctx =>
             {
-                texture.Value.Draw(ctx, new Vector2(-16, -16), Color.White);
+                texture.Value.Draw(ctx, new Vector2(-16, -16), Colors.White);
             }
         );
                         
@@ -226,7 +226,7 @@ public class CHead : Component
                 gizmoCanvasItem.OnDraw(
                     ctx =>
                     {
-                        ctx.DrawLine(Vector2.Zero, dir * 20, Color.Blue);
+                        ctx.DrawLine(Vector2.Zero, dir * 20, Colors.Blue);
                         head.LastPositions.Draw(gizmoTransform.GlobalPosition, ctx);
                     }
                 );
@@ -283,7 +283,7 @@ public class LastPositions(int maxCount = 2048)
         foreach (var position in _positions)
         {
             var drawPos = (position.Position - origin) - Vector2.One;
-            ctx.DrawRect(new Rect2I((int)drawPos.X, (int)drawPos.Y, 2, 2), Color.Red);
+            ctx.DrawRect(new Rect2I((int)drawPos.X, (int)drawPos.Y, 2, 2), Colors.Red);
         }
     }
 }

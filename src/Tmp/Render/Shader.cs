@@ -24,7 +24,7 @@ public class Shader(IRlShaderSource shaderSource) : IDisposable
     {
         var shader = GetOrLoad();
         var loc = Raylib.GetShaderLocation(shader, name);
-        Raylib.SetShaderValue(shader, loc, new Vector4(value.R / 255f, value.G / 255f, value.B / 255f, value.A / 255f), ShaderUniformDataType.Vec4);
+        Raylib.SetShaderValue(shader, loc, new Vector4(value.R, value.G, value.B, value.A), ShaderUniformDataType.Vec4);
     }
 
     public void Dispose()

@@ -14,8 +14,8 @@ namespace Tmp.Project;
 
 public static class Palette
 {
-    public static Color Background { get; } = ColorFromHex("23222a");
-    public static Color Shadow { get; } = Color.Black;
+    public static Color Background { get; } = new("23222a");
+    public static Color Shadow { get; } = Colors.Black;
 }
 
 public static class Project
@@ -55,7 +55,7 @@ public static class Project
                             {
                                 Settings = new SubViewport.Settings
                                 {
-                                    ClearColor = Color.Blank,
+                                    ClearColor = Colors.Transparent,
                                     Size = gameSize,
                                 },
                                 Texture = viewportTexture
@@ -88,7 +88,7 @@ public static class Project
                                 
                                 canvasItem.OnDraw(ctx =>
                                 {
-                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Color.White);
+                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
                                 });
 
                                 return [];
@@ -100,7 +100,7 @@ public static class Project
                                 
                                 canvasItem.OnDraw(ctx =>
                                 {
-                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Color.White);
+                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
                                 });
 
                                 return [];

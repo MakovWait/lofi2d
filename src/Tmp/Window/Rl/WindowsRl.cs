@@ -38,7 +38,7 @@ public class WindowRl(AppViewport viewport) : IWindow, IAppViewportTarget
     public void Draw()
     {
         Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.White);
+        Raylib.ClearBackground(Colors.White);
 
         var size = new Vector2I(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
         viewport.Draw(size, this);
@@ -59,7 +59,7 @@ public class WindowRl(AppViewport viewport) : IWindow, IAppViewportTarget
             rect,
             Vector2.Zero,
             0,
-            Color.White
+            Colors.White
         );
     }
 }

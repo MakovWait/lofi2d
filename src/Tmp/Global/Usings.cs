@@ -6,3 +6,5 @@ global using _RenderTexture2D = Raylib_cs.RenderTexture2D;
 global using _Rectangle = Raylib_cs.Rectangle;
 global using _Shader = Raylib_cs.Shader;
 global using _Material = Raylib_cs.Material;
+global using _Color = Raylib_cs.Color;
+global using Color = Tmp.Math.Color;

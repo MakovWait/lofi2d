@@ -44,10 +44,10 @@ public class Bounds(Rect2 rect, float spawnFoodOffset = 16)
         var bottomLeft = rect.Position + new Vector2(0, rect.Size.Y);
         var bottomRight = rect.Position + rect.Size;
 
-        ctx.DrawLine(topLeft, topRight, Color.Blue);
-        ctx.DrawLine(topRight, bottomRight, Color.Blue);
-        ctx.DrawLine(bottomRight, bottomLeft, Color.Blue);
-        ctx.DrawLine(bottomLeft, topLeft, Color.Blue);
+        ctx.DrawLine(topLeft, topRight, Colors.Blue);
+        ctx.DrawLine(topRight, bottomRight, Colors.Blue);
+        ctx.DrawLine(bottomRight, bottomLeft, Colors.Blue);
+        ctx.DrawLine(bottomLeft, topLeft, Colors.Blue);
     }
 
     public Vector2 GetRandomFoodPosition()
