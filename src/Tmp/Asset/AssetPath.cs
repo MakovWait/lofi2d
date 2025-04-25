@@ -13,6 +13,8 @@ public readonly record struct AssetPath(string RawPath, string Label)
     public string Extension => FilePath.Extension;
 
     public static implicit operator AssetPath(string path) => FromPath(path);
+    
+    public static implicit operator FilePath(AssetPath self) => self.FilePath;
 
     public static AssetPath FromPath(string path)
     {

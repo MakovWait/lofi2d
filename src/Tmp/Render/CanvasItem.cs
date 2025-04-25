@@ -5,8 +5,11 @@ using Tmp.Render.Util;
 
 namespace Tmp.Render;
 
-public class CanvasItem : ICanvasItemContainer, IDrawContext
+public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
 {
+    public IMaterial? Material { get; set; }
+    public bool UseParentMaterial { get; set; } = false;
+    
     private CanvasItem? _parent;
     private Transform2D _transform = Transform2D.Identity;
 
@@ -27,9 +30,37 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext
         child._parent = null;
     }
 
+    void IMaterialTarget.Draw()
+    {
+        InvokeDrawSelfCallback();
+    }
+    
     public void Draw()
     {
+        DrawSelf();
+        DrawChildren();
+    }
+
+    private void DrawSelf()
+    {
+        var material = UseParentMaterial ? _parent?.Material : Material;
+        if (material != null)
+        {
+            material.Draw(this);
+        }
+        else
+        {
+            InvokeDrawSelfCallback();
+        }
+    }
+
+    private void InvokeDrawSelfCallback()
+    {
         _onDraw?.Invoke(this);
+    }
+    
+    private void DrawChildren()
+    {
         foreach (var canvasItem in _children)
         {
             canvasItem.Draw();
@@ -179,4 +210,9 @@ public interface IDrawContext
     internal void DrawTextureRectRegion(_Texture2D texture, Rect2 rect, Rect2 sourceRect, Color modulate);
     
     void DrawFps();
+}
+
+public interface IMaterialTarget
+{
+    public void Draw();
 }

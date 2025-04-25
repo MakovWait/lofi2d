@@ -21,6 +21,8 @@ public readonly record struct FilePath(string UncheckedValue)
         }
     }
 
+    public string? ValueOrNullIfEmpty => UncheckedValue == "" ? null : Value;
+
     public string Extension => Path.GetExtension(Value)[1..];
     
     public bool Exists => File.Exists(UncheckedValue);
