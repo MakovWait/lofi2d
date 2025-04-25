@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using System.Numerics;
+using Raylib_cs;
 using Tmp.Asset;
 using Tmp.Asset.Format;
 using Tmp.Asset.Util;
@@ -17,6 +18,13 @@ public class Shader(IRlShaderSource shaderSource) : IDisposable
         var shader = GetOrLoad();
         var loc = Raylib.GetShaderLocation(shader, name);
         Raylib.SetShaderValue(shader, loc, value, ShaderUniformDataType.Float);
+    }
+    
+    public void SetUniform(string name, Color value)
+    {
+        var shader = GetOrLoad();
+        var loc = Raylib.GetShaderLocation(shader, name);
+        Raylib.SetShaderValue(shader, loc, new Vector4(value.R / 255f, value.G / 255f, value.B / 255f, value.A / 255f), ShaderUniformDataType.Vec4);
     }
 
     public void Dispose()

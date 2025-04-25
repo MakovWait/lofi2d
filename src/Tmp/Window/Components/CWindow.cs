@@ -1,6 +1,7 @@
 using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Math;
+using Tmp.Render;
 using Tmp.Window.Rl;
 
 namespace Tmp.Window.Components;
@@ -10,6 +11,7 @@ public readonly struct WindowSettings
     public string? Title { get; init; }
     public Vector2I? Size { get; init; }
     public int? TargetFps { get; init; }
+    public required SubViewport.Settings ViewportSettings { get; init; }
 }
 
 public class CWindow(WindowSettings settings) : ComponentFunc((self, children) =>

@@ -9,12 +9,19 @@ namespace Tmp.Render;
 
 public class SubViewport : IViewport
 {
+    public struct Settings
+    {
+        public required Vector2I Size { get; init; }
+        public required Color ClearColor { get; init; }
+    }
+    
     private readonly SubViewports _subViewports;
     private readonly CanvasLayers _canvasLayers = new();
     private readonly Canvas _canvas = new();
     private readonly Camera2D _camera = new();
     private readonly ContainerItem _containerItem;
     private readonly SubViewportTexture _texture;
+    private readonly Color _clearColor;
     
     private Vector2I _size;
     
@@ -22,10 +29,11 @@ public class SubViewport : IViewport
     public _RenderTexture2D RenderTarget => _texture.Target;
     public ITexture2D Texture => _texture;
     
-    public SubViewport(Vector2I size)
+    public SubViewport(Settings settings)
     {
-        _size = size;
-        
+        _size = settings.Size;
+        _clearColor = settings.ClearColor;
+
         _texture = new SubViewportTexture(this);
         _containerItem = new ContainerItem(this);
         _subViewports = new SubViewports(this);
@@ -62,7 +70,7 @@ public class SubViewport : IViewport
         _subViewports.Draw();
 
         Raylib.BeginTextureMode(RenderTarget);
-        Raylib.ClearBackground(Color.Black);
+        Raylib.ClearBackground(_clearColor);
 
         Raylib.BeginMode2D(_camera);
         _canvas.Draw();

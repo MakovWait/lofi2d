@@ -11,7 +11,7 @@ public class CSubViewport(CSubViewport.Props props) : ComponentFunc((self, child
 {
     var container = self.UseContext<ISubViewportContainer>();
     var viewport = new SubViewport(
-        props.Size
+        props.Settings
     );
     viewport.BindTo(self);
     
@@ -30,8 +30,8 @@ public class CSubViewport(CSubViewport.Props props) : ComponentFunc((self, child
 {
     public readonly struct Props
     {
-        public Vector2I Size { get; init; }
+        public required SubViewport.Settings Settings { get; init; }
         
-        public IOut<ITexture2D?> Texture { get; init; }
+        public required IOut<ITexture2D?> Texture { get; init; }
     }
 }

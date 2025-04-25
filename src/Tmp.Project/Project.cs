@@ -1,13 +1,22 @@
 ﻿using Tmp.Asset;
+using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Asset.Components;
+using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Math;
 using Tmp.Math.Components;
+using Tmp.Render;
 using Tmp.Render.Components;
 using Tmp.Time;
 using Tmp.Window.Components;
 
 namespace Tmp.Project;
+
+public static class Palette
+{
+    public static Color Background { get; } = ColorFromHex("23222a");
+    public static Color Shadow { get; } = Color.Black;
+}
 
 public static class Project
 {
@@ -21,12 +30,19 @@ public static class Project
             var boundsSize = new Vector2(320, 180);
             var bounds = root.CreateContext(new Bounds(new Rect2(-boundsSize / 2, boundsSize)));
             root.CreateContext(new Snake());
+            
+            var viewportTexture = new Out<ITexture2D?>();
 
             return new CWindow(new WindowSettings
             {
                 Title = "Hello world!",
-                Size = gameSize,
-                TargetFps = 60
+                Size = new Vector2I(1280, 720),
+                TargetFps = 60,
+                ViewportSettings = new SubViewport.Settings
+                {
+                    Size = gameSize,
+                    ClearColor = Palette.Background
+                }
             })
             {
                 new CTime
@@ -35,14 +51,60 @@ public static class Project
                     {
                         new CNode2DTransformRoot()
                         {
-                            new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
-                            new CCamera2D()
+                            new CSubViewport(new CSubViewport.Props
                             {
-                                Offset = gameSize / 2
+                                Settings = new SubViewport.Settings
+                                {
+                                    ClearColor = Color.Blank,
+                                    Size = gameSize,
+                                },
+                                Texture = viewportTexture
+                            })
+                            {
+                                new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
+                                new CCamera2D()
+                                {
+                                    Offset = gameSize / 2
+                                },
+                                new CSnake(),
+                                new CFood(),
+                                new CHud(),   
                             },
-                            new CSnake(),
-                            new CFood(),
-                            new CHud(),
+                      
+                            // shadow
+                            new ComponentFunc(self =>
+                            {
+                                var transform = self.UseTransform2D();
+                                transform.Position += new Vector2(3, 3);
+                                
+                                var canvasItem = self.UseCanvasItem(transform);
+                                canvasItem.Material = self.UseShaderMaterial(
+                                    "assets://shaders/shadow_only/shader.jass",
+                                    new IShaderMaterialParameters.Lambda(shader =>
+                                    {
+                                        shader.SetUniform("shadowColor", Palette.Shadow);
+                                    })
+                                );
+                                
+                                canvasItem.OnDraw(ctx =>
+                                {
+                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Color.White);
+                                });
+
+                                return [];
+                            }),
+                            new ComponentFunc(self =>
+                            {
+                                var transform = self.UseTransform2D();
+                                var canvasItem = self.UseCanvasItem(transform);
+                                
+                                canvasItem.OnDraw(ctx =>
+                                {
+                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Color.White);
+                                });
+
+                                return [];
+                            }),
                         }
                     }
                 }

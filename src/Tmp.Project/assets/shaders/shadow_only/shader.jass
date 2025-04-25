@@ -1,0 +1,4 @@
+[self]
+__type__="Shader"
+vs=""
+fs="assets://shaders/shadow_only/fragment.glsl"

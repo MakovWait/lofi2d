@@ -23,7 +23,7 @@ public class WindowsRl : IWindows
         );
         Raylib.SetTargetFPS(settings.TargetFps ?? 60);
         _window = new WindowRl(
-            new AppViewport(new SubViewport(size), input)
+            new AppViewport(new SubViewport(settings.ViewportSettings), input)
         );
     }
 
