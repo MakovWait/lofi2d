@@ -6,23 +6,20 @@ namespace Tmp.Time;
 public class FrameTime(FrameTime? parent)
 {
     public FrameTime Root => GetRoot();
-    
     /// local scale
     public float Scale { get; set; } = 1f;
-    
     /// seconds
-    public float Elapsed => _elapsed;
+    public float Elapsed { get; private set; }
+    /// seconds
+    public float Delta { get; private set; }
+    /// seconds
+    public float DeltaUnscaled { get; private set; }
 
-    /// seconds
-    public float Delta => _delta;
-    
-    private float _delta;
-    private float _elapsed;
-    
     public void Tick(float delta)
     {
-        _delta = delta * FinalScale();
-        _elapsed += _delta;
+        Delta = delta;
+        Delta = delta * FinalScale();
+        Elapsed += Delta;
     }
 
     private float FinalScale()
