@@ -9,6 +9,11 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
 {
     public IMaterial? Material { get; set; }
     public bool UseParentMaterial { get; set; } = false;
+    public Color Modulate { get; set; } = Colors.White;
+    public Color SelfModulate { get; set; } = Colors.White;
+    
+    private Color FinalModulate => SelfModulate * InheritedModulate;
+    private Color InheritedModulate => (_parent?.Modulate ?? Colors.White) * Modulate;
     
     private CanvasItem? _parent;
     private Transform2D _transform = Transform2D.Identity;
@@ -30,6 +35,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
         child._parent = null;
     }
 
+    Color IMaterialTarget.Modulate => FinalModulate;
+    
     void IMaterialTarget.Draw()
     {
         InvokeDrawSelfCallback();
@@ -82,7 +89,7 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
             from = transform.BasisXform(from);
             to = transform.BasisXform(to);  
         }
-        Raylib.DrawLineEx(transform.Origin + from, transform.Origin + to, width, color);
+        Raylib.DrawLineEx(transform.Origin + from, transform.Origin + to, width, color * FinalModulate);
     }
 
     public void DrawRect(Rect2I rect, Color color)
@@ -99,8 +106,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
         bottomRight = transform.Origin + transform.BasisXform(bottomRight);
         bottomLeft = transform.Origin + transform.BasisXform(bottomLeft);
         
-        Raylib.DrawTriangle(topLeft, bottomLeft, bottomRight, color);
-        Raylib.DrawTriangle(topLeft, bottomRight, topRight, color);
+        Raylib.DrawTriangle(topLeft, bottomLeft, bottomRight, color * FinalModulate);
+        Raylib.DrawTriangle(topLeft, bottomRight, topRight, color * FinalModulate);
     }
 
     public void DrawTextureRect(_Texture2D texture, Rect2 rect, Color color)
@@ -147,7 +154,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
         Rlgl.SetTexture(texture.Id);
         Rlgl.Begin(DrawMode.Quads);
         
-        Rlgl.Color4ub(modulate.R8B, modulate.G8B, modulate.B8B, modulate.A8B);
+        var finalModulate = modulate * FinalModulate;
+        Rlgl.Color4ub(finalModulate.R8B, finalModulate.G8B, finalModulate.B8B, finalModulate.A8B);
         Rlgl.Normal3f(0.0f, 0.0f, 1.0f);
         
         if (flipX) Rlgl.TexCoord2f((sourceX + sourceWidth)/width, sourceY/height);
@@ -214,5 +222,7 @@ public interface IDrawContext
 
 public interface IMaterialTarget
 {
+    Color Modulate { get; }
+    
     public void Draw();
 }

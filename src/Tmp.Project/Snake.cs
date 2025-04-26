@@ -183,7 +183,7 @@ public class CHead : Component
                         
         self.On<Update>(_ =>
         {
-            var dt = time.Delta();
+            var dt = time.Delta;
             
             if (input.IsKeyPressed(KeyboardKey.A))
             {
