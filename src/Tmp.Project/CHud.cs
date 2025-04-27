@@ -3,7 +3,7 @@ using Tmp.Render.Components;
 
 namespace Tmp.Project;
 
-public class CHud() : ComponentFunc(self =>
+public class CHud() : СFunc(self =>
 {
     return new CCanvasLayer()
     {

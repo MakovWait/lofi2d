@@ -223,7 +223,7 @@ public class CHead : Component
         
         return [
             // gizmo
-            new ComponentFunc(gizmo =>
+            new СFunc(gizmo =>
             {
                 var gizmoTransform = gizmo.UseTransform2D();
                 var gizmoCanvasItem = gizmo.UseCanvasItem(gizmoTransform);

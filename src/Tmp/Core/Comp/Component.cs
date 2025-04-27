@@ -105,9 +105,9 @@ public class Component : IComponent, IEnumerable<IComponent>
     }
 }
 
-public class ComponentFunc(Func<INodeInit, Components, Components> init) : Component
+public class СFunc(Func<INodeInit, Components, Components> init) : Component
 {
-    public ComponentFunc(Func<INodeInit, Components> init): this((self, _) => init(self))
+    public СFunc(Func<INodeInit, Components> init): this((self, _) => init(self))
     {
         
     }

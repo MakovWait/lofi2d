@@ -22,7 +22,7 @@ public static class Project
 {
     public static Component GetRoot()
     {
-        return new ComponentFunc(root =>
+        return new СFunc(root =>
         {
             var gameSize = new Vector2I(320, 180);
             var settingDrawGizmo = root.CreateContext(new SettingDrawGizmo(false));
@@ -72,7 +72,7 @@ public static class Project
                             },
                       
                             // shadow
-                            new ComponentFunc(self =>
+                            new СFunc(self =>
                             {
                                 var transform = self.UseTransform2D();
                                 transform.Position += new Vector2(3, 3);
@@ -93,7 +93,7 @@ public static class Project
 
                                 return [];
                             }),
-                            new ComponentFunc(self =>
+                            new СFunc(self =>
                             {
                                 var transform = self.UseTransform2D();
                                 var canvasItem = self.UseCanvasItem(transform);

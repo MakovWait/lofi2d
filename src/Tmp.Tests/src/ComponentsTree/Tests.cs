@@ -10,7 +10,7 @@ public class Tests
     public void Smoke()
     {
         var tree = new Tree();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.OnMount(() =>
             {
@@ -34,7 +34,7 @@ public class Tests
                 Console.WriteLine("deferred!!!");
             });
             
-            return new ComponentFunc(self =>
+            return new СFunc(self =>
             {
                 self.OnMount(() =>
                 {
@@ -57,9 +57,9 @@ public class ConditionalTests
     {
         var cond = new Signal<bool>();
         var tree = new Tree();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
-            return new ComponentFunc(self =>
+            return new СFunc(self =>
             {
                 self.OnMount(() => Assert.Pass());
                 return [];
@@ -76,9 +76,9 @@ public class ConditionalTests
     {
         var cond = new Signal<bool>();
         var tree = new Tree();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
-            return new ComponentFunc(self =>
+            return new СFunc(self =>
             {
                 self.OnMount(() => Assert.Pass());
                 return [];
@@ -101,13 +101,13 @@ public class CForTests
         var tree = new Tree();
 
         var items = new ReactiveList<Item>();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             return new CFor<Item>
             {
                 In = items.Changed,
                 ItemKey = item => item.Key,
-                Render = (item, _) => new ComponentFunc(self =>
+                Render = (item, _) => new СFunc(self =>
                 {
                     self.OnMount(() => Console.WriteLine(item.Key) );
                     return [];
@@ -127,13 +127,13 @@ public class CForTests
         var tree = new Tree();
 
         var items = new ReactiveList<Item>();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             return new CFor<Item>
             {
                 In = items.Changed,
                 ItemKey = item => item.Key,
-                Render = (item, _) => new ComponentFunc(self =>
+                Render = (item, _) => new СFunc(self =>
                 {
                     self.OnMount(() =>
                     {
@@ -156,13 +156,13 @@ public class CForTests
         var tree = new Tree();
 
         var items = new ReactiveList<Item>();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             return new CFor<Item>
             {
                 In = items.Changed,
                 ItemKey = item => item.Key,
-                Render = (item, _) => new ComponentFunc(self =>
+                Render = (item, _) => new СFunc(self =>
                 {
                     self.OnMount(Assert.Fail);
                     return [];
@@ -187,13 +187,13 @@ public class PortalTests
     {
         var tree = new Tree();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.SetName("root");
             self.CreateContext(0);
             return
             [
-                new ComponentFunc(self =>
+                new СFunc(self =>
                 {
                     self.SetName("remote-parent");
                     self.CreateContext(1);
@@ -201,7 +201,7 @@ public class PortalTests
                 }),
                 new Portal("/root/remote-parent".AsNodePathLocator())
                 {
-                    new ComponentFunc(self =>
+                    new СFunc(self =>
                     {
                         var ctx = self.UseContext<int>();
 
@@ -225,14 +225,14 @@ public class PortalTests
     {
         var tree = new Tree();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.SetName("root");
             return
             [
                 new Portal("/root/remote-parent".AsNodePathLocator())
                 {
-                    new ComponentFunc(self =>
+                    new СFunc(self =>
                     {
                         self.OnMount(Assert.Fail);
                         return [];
@@ -251,7 +251,7 @@ public class CallDeferredTests
     {
         var tree = new Tree();
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.CallDeferred(_ =>
             {
@@ -269,7 +269,7 @@ public class CallDeferredTests
     {
         var tree = new Tree();
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.CallDeferred(_ =>
             {
@@ -426,10 +426,10 @@ public class ContextTests
     {
         var tree = new Tree();
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             var parentVal = self.CreateContext(1);
-            return new ComponentFunc(self =>
+            return new СFunc(self =>
             {
                 var childVal = self.CreateContext(2);
                 var usedVal = self.UseContext<int>();
@@ -450,7 +450,7 @@ public class ContextTests
     {
         var tree = new Tree();
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             var val = self.CreateContext(1);
             Assert.That(val, Is.EqualTo(1));
@@ -467,7 +467,7 @@ public class ContextTests
     {
         var tree = new Tree();
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.CreateContext(1);
 
@@ -490,7 +490,7 @@ public class CallbacksTests
     public void SmokeOn()
     {
         var tree = new Tree();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.On<TestCallback>(args =>
             {
@@ -509,7 +509,7 @@ public class CallbacksTests
     public void SmokeLate()
     {
         var tree = new Tree();
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.OnLate<TestCallback>(args =>
             {
@@ -530,7 +530,7 @@ public class CallbacksTests
         var tree = new Tree();
         Calls calls = [];
         
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.On<TestCallback>(_ =>
             {
@@ -542,7 +542,7 @@ public class CallbacksTests
                 calls.Log(4);
             });
             
-            return new ComponentFunc(self =>
+            return new СFunc(self =>
             {
                 self.On<TestCallback>(_ =>
                 {
@@ -574,7 +574,7 @@ public class SignalTests
         var tree = new Tree();
         var signal = new Signal();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -597,7 +597,7 @@ public class SignalTests
         var tree = new Tree();
         var signal = new Signal();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -619,7 +619,7 @@ public class SignalTests
         var tree = new Tree();
         var signal = new Signal();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -643,7 +643,7 @@ public class SignalTests
         var signal = new Signal();
         var calls = 0;
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -669,7 +669,7 @@ public class SignalTests
         var signal = new Signal();
         var calls = 0;
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -694,7 +694,7 @@ public class SignalTests
         var tree = new Tree();
         var signal = new Signal<int>();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 
@@ -721,7 +721,7 @@ public class SignalTests
         var tree = new Tree();
         var signal = new Signal<int>();
 
-        tree.Build(new ComponentFunc(self =>
+        tree.Build(new СFunc(self =>
         {
             self.UseSignal(
                 signal, 

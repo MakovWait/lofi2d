@@ -63,7 +63,7 @@ public class Bounds(Rect2 rect, float spawnFoodOffset = 16)
     }
 }
 
-public class CBoundsGizmo(Bounds bounds) : ComponentFunc(self =>
+public class CBoundsGizmo(Bounds bounds) : СFunc(self =>
 {
     var canvasItem = self.UseCanvasItem(self.UseTransform2D());
 

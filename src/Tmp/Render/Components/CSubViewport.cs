@@ -7,7 +7,7 @@ using Tmp.Render.Util;
 
 namespace Tmp.Render.Components;
 
-public class CSubViewport(CSubViewport.Props props) : ComponentFunc((self, children) =>
+public class CSubViewport(CSubViewport.Props props) : СFunc((self, children) =>
 {
     var container = self.UseContext<ISubViewportContainer>();
     var viewport = new SubViewport(

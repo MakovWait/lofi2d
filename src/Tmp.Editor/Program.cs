@@ -16,7 +16,7 @@ var app = new App(new CWindowsImGui
 });
 await app.Run();
 
-public class CWindowsImGui() : ComponentFunc((self, children) =>
+public class CWindowsImGui() : СFunc((self, children) =>
 {
     var windows = new WindowsImGui();
     self.CreateContext<IWindows>(windows);

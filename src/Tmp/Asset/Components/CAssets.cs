@@ -5,7 +5,7 @@ using Tmp.Render;
 
 namespace Tmp.Asset.Components;
 
-public sealed class CAssets(IAssets assets) : ComponentFunc((self, children) =>
+public sealed class CAssets(IAssets assets) : СFunc((self, children) =>
 {
     self.CreateContext(assets);
 

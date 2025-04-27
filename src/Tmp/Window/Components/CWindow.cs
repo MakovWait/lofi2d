@@ -14,7 +14,7 @@ public readonly struct WindowSettings
     public required SubViewport.Settings ViewportSettings { get; init; }
 }
 
-public class CWindow(WindowSettings settings) : ComponentFunc((self, children) =>
+public class CWindow(WindowSettings settings) : СFunc((self, children) =>
 {
     var windows = self.UseContext<IWindows>();
 
@@ -31,7 +31,7 @@ public class CWindow(WindowSettings settings) : ComponentFunc((self, children) =
     return children;
 });
 
-public class CWindowsRl() : ComponentFunc((self, children) =>
+public class CWindowsRl() : СFunc((self, children) =>
 {
     var windows = new WindowsRl();
     self.CreateContext<IWindows>(windows);
