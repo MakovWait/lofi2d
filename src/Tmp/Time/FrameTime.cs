@@ -22,6 +22,11 @@ public class FrameTime(FrameTime? parent)
         Elapsed += Delta;
     }
 
+    public float DeltaByScale(bool scaled)
+    {
+        return scaled ? Delta : DeltaUnscaled; 
+    }
+    
     private float FinalScale()
     {
         return Scale * (parent?.Scale ?? 1f);
