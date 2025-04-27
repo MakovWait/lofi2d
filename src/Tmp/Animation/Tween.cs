@@ -79,7 +79,7 @@ public class Tween(bool defaultRunning = true)
                         _currentStepIdx = 0;
                         foreach (var step in _steps)
                         {
-                            step.PrepareForReuse();
+                            step.PrepareForReplay();
                         }
 #if DEBUG
                         if (_loops <= 0 && Mathf.IsEqualApprox(remainingDelta, initialDelta))
@@ -159,7 +159,7 @@ public class Tween(bool defaultRunning = true)
 
     public void Replay()
     {
-        PrepareForReuse();
+        PrepareForReplay();
         Play();
     }
     
@@ -190,7 +190,7 @@ public class Tween(bool defaultRunning = true)
         return this;
     }
     
-    public void PrepareForReuse()
+    public void PrepareForReplay()
     {
         MarkFinished(true);
         _running = true;
@@ -199,7 +199,7 @@ public class Tween(bool defaultRunning = true)
         _loopsDone = 0;
         foreach (var step in _steps)
         {
-            step.PrepareForReuse();
+            step.PrepareForReplay();
         }
         MarkFinished(false);
     }
@@ -294,7 +294,7 @@ public class Tween(bool defaultRunning = true)
             return finished;
         }
 
-        public void PrepareForReuse()
+        public void PrepareForReplay()
         {
             _started = false;
         }
@@ -558,7 +558,7 @@ public class SubTweenTweener(Tween tween) : ITweener
     {
         _finished = false;
         _elapsedTime = 0f;
-        tween.PrepareForReuse();
+        tween.PrepareForReplay();
     }
 
     public bool Step(ref float remainingDelta)
