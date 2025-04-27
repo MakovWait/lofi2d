@@ -121,6 +121,23 @@ public interface ISignalTarget<T>
     }
 }
 
+public static class SignalEx
+{
+    public static ISignalTarget<T> Connect<T>(this Signal<T> origin, Action<T> handler)
+    {
+        var target = new SignalTarget<T>(handler);
+        origin.Connect(target);
+        return target;
+    }
+    
+    public static ISignalTarget<Empty> Connect(this Signal origin, Action handler)
+    {
+        var target = new SignalTarget(handler);
+        origin.Connect(target);
+        return target;
+    }
+}
+
 public static class ISignalTargetEx
 {
     public static ISignalTarget<T> Throttled<T>(this ISignalTarget<T> origin, ICallDeferredSource deferredSource)
