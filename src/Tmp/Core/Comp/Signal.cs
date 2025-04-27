@@ -23,6 +23,12 @@ public class Signal<T>(T initial = default!)
         _targets.Remove(target);
     }
 
+    public void Reset()
+    {
+        _state = initial;
+        _targets.Clear();
+    }
+    
     private class Targets
     {
         private readonly List<ISignalTarget<T>> _targets = [];
@@ -61,6 +67,12 @@ public class Signal<T>(T initial = default!)
             {
                 throw new InvalidOperationException("Cannot modify signal targets while it is frozen.");
             }
+        }
+
+        public void Clear()
+        {
+            EnsureIsUnfrozen();
+            _targets.Clear();       
         }
     }
 }

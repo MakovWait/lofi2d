@@ -120,10 +120,10 @@ public class TweenTests
         float? lastRange = null;
         
         tween = tween.Chain();
-        tween.TweenRange(1f, x =>
+        tween.TweenRange(x =>
         {
             lastRange = x;
-        });
+        }, 1f);
         
         time.Tick(0.5f);
         tween.Step(time);
@@ -147,13 +147,35 @@ public class TweenTests
         float? lastRange = null;
         
         tween = tween.Chain();
-        tween.TweenRange(1f, x =>
+        tween.TweenRange(x =>
         {
             lastRange = x;
-        });
+        }, 1f);
         
         time.Tick(1.5f);
         tween.Step(time);
         Assert.That(lastRange, Is.EqualTo(1));
+    }    
+    
+    [Test]
+    public void TestSubTweenTweener()
+    {
+        var time = new FrameTime(null);
+        
+        var subTween = new Tween();
+        subTween.TweenInterval(0.1f);
+        subTween.TweenInterval(0.2f);
+        
+        var tween = new Tween();
+        tween.TweenSubTween(subTween);
+        
+        time.Tick(1.5f);
+        tween.Step(time);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(tween.StepFinished.Value + 1, Is.EqualTo(1));
+            Assert.That(subTween.StepFinished.Value + 1, Is.EqualTo(2));
+        });
     }
 }

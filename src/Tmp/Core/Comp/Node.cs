@@ -14,11 +14,11 @@ public class Node : INodeInit
     private readonly LifecycleCallbacks _onLateCleanups = new();
     private readonly LifecycleCallbacks _onMounts = new();
     private readonly LifecycleCallbacks _onLateMounts = new();
-    
-    private NodeState _state = NodeState.Building;
+
     private readonly Tree _tree;
 
     public string Name { get; set; }
+    public NodeState State { get; private set; } = NodeState.Building;
 
     public void OnMount(Action mount)
     {
@@ -36,7 +36,7 @@ public class Node : INodeInit
         Name = initialName;
     }
 
-    enum NodeState
+    public enum NodeState
     {
         Building,
         Mounted,
@@ -46,7 +46,7 @@ public class Node : INodeInit
     
     public void Mount()
     {
-        _state = NodeState.Mounted;
+        State = NodeState.Mounted;
         _onMounts.InvokeOneShot();
         _children.Mount();
         _onLateMounts.InvokeOneShot();
@@ -57,7 +57,7 @@ public class Node : INodeInit
         _onCleanups.InvokeOneShot();
         _children.Free();
         _onLateCleanups.InvokeOneShot();
-        _state = NodeState.Freed;
+        State = NodeState.Freed;
         _onCleanups.Clear();
         _onLateCleanups.Clear();
     }
@@ -183,14 +183,14 @@ public class Node : INodeInit
         _lateCallbacks.Call(args);
     }
 
-    public void On<T>(Action<T> action)
+    public ICallbackDispose On<T>(Action<T> action)
     {
-        _callbacks.Add(action);
+        return _callbacks.Add(action);
     }
 
-    public void OnLate<T>(Action<T> action)
+    public ICallbackDispose OnLate<T>(Action<T> action)
     {
-        _lateCallbacks.Add(action);
+        return _lateCallbacks.Add(action);
     }
 
     public void SetName(string value)
@@ -357,28 +357,48 @@ public class Node : INodeInit
             }
         }
 
-        public void Add<T>(Action<T> callback)
+        public ICallbackDispose Add<T>(Action<T> callback)
         {
-            _callbacks.Add(new Callback<T>(callback));
+            var callbackWrapper = new Callback<T>(callback, this);
+            _callbacks.Add(callbackWrapper);
+            return callbackWrapper;
         }
 
-        private interface ICallback
+        private void Remove(ICallback callback)
+        {
+            _callbacks.Remove(callback);
+        }
+
+        private interface ICallback : ICallbackDispose
         {
             void Handle<T>(T state);
         }
         
-        private class Callback<Y>(Action<Y> callback) : ICallback
+        private class Callback<Y>(Action<Y> callback, Callbacks callbacks) : ICallback
         {
+            private bool _disposed;
+            
             public void Handle<T>(T state)
             {
+                Debug.Assert(!_disposed);;
                 if (state is Y casted)
                 {
                     callback(casted);
                 }
             }
+
+            public void Dispose()
+            {
+                Debug.Assert(!_disposed);;
+                GC.SuppressFinalize(this);
+                callbacks.Remove(this);
+                _disposed = true;
+            }
         }
     }
 }
+
+public interface ICallbackDispose : IDisposable;
 
 [DebuggerDisplay("{AsString}")]
 public sealed class NodePath(string path) : IEquatable<string>
@@ -571,6 +591,8 @@ public interface INodeInit : INodeLocation, ICallDeferredSource
 {
     string Name { get; }
 
+    Node.NodeState State { get; }
+    
     void OnMount(Action mount);
     
     void OnLateMount(Action mount);
@@ -585,9 +607,9 @@ public interface INodeInit : INodeLocation, ICallDeferredSource
 
     void Call<T>(T args);
     
-    void On<T>(Action<T> action);
+    ICallbackDispose On<T>(Action<T> action);
     
-    void OnLate<T>(Action<T> action);
+    ICallbackDispose OnLate<T>(Action<T> action);
 
     void SetName(string value);
 }

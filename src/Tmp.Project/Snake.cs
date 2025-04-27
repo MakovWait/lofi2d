@@ -1,4 +1,5 @@
 ﻿using Raylib_cs;
+using Tmp.Animation;
 using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Asset.Components;
 using Tmp.Core;
@@ -136,6 +137,10 @@ public class CBodyPart(BodyPart data) : Component
         var transform = self.UseTransform2D();
         var canvasItem = self.UseCanvasItem(transform);
         var texture = self.UseAsset<ITexture2D>("assets://body_part_texture.jass");
+        
+        var tween = self.CreateOneShotTween();
+        tween.SetEase(Easing.EaseType.Out).SetTrans(Easing.TransitionType.Back);
+        tween.TweenMethod(transform.SetScale, Vector2.Zero, Vector2.One, 0.3f);
         
         canvasItem.OnDraw(
             ctx =>

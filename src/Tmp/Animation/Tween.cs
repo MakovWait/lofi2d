@@ -4,11 +4,11 @@ using Tmp.Time;
 
 namespace Tmp.Animation;
 
-public class Tween
+public class Tween(bool defaultRunning = true)
 {
     public Signal Finished { get; } = new();
-    public Signal<int> StepFinished { get; } = new();
-    public Signal<int> LoopFinished { get; } = new();
+    public Signal<int> StepFinished { get; } = new(-1);
+    public Signal<int> LoopFinished { get; } = new(-1);
 
     public int LoopsLeft => _loops == 0 ? -1 : _loops - _loopsDone;
     public float ElapsedTime => _elapsedTime;
@@ -18,7 +18,7 @@ public class Tween
     private int _currentStepIdx;
     private float _speedScale = 1f;
     private bool _ignoreTimeScale;
-    private bool _running = true;
+    private bool _running = defaultRunning;
     private bool _parallel;
     private bool _finished;
     private int _loopsDone;
@@ -31,6 +31,12 @@ public class Tween
 
     public bool Step(FrameTime time)
     {
+        var delta = time.DeltaByScale(scaled: !_ignoreTimeScale) * _speedScale;
+        return StepWithForcedDelta(delta);
+    }
+
+    public bool StepWithForcedDelta(float delta)
+    {
         if (_finished)
         {
             return true;
@@ -41,7 +47,7 @@ public class Tween
             return false;
         }
 
-        var remainingDelta = time.DeltaByScale(scaled: !_ignoreTimeScale) * _speedScale;
+        var remainingDelta = delta;
         _elapsedTime += remainingDelta;
 #if DEBUG
         var initialDelta = remainingDelta;
@@ -64,8 +70,7 @@ public class Tween
                     if (_loopsDone == _loops)
                     {
                         _running = false;
-                        _finished = true;
-                        Finished.Emit();
+                        MarkFinished(true);
                         break;
                     }
                     else
@@ -74,7 +79,7 @@ public class Tween
                         _currentStepIdx = 0;
                         foreach (var step in _steps)
                         {
-                            step.Reset();
+                            step.PrepareForReuse();
                         }
 #if DEBUG
                         if (_loops <= 0 && Mathf.IsEqualApprox(remainingDelta, initialDelta))
@@ -99,7 +104,7 @@ public class Tween
 
         return _finished;
     }
-
+    
     public Tween SetEase(Easing.EaseType easeType)
     {
         _easeType = easeType;
@@ -142,12 +147,6 @@ public class Tween
         return this;
     }
 
-    public void Kill()
-    {
-        _running = false;
-        _finished = true;
-    }
-
     public void Play()
     {
         _running = true;
@@ -155,22 +154,67 @@ public class Tween
 
     public void Pause()
     {
-        StopInternal(false);
+        _running = false;
+    }
+
+    public void Replay()
+    {
+        PrepareForReuse();
+        Play();
+    }
+    
+    public Tween Reset()
+    {
+        if (IsRunning())
+        {
+            Stop();
+        }
+        
+        Finished.Reset();
+        LoopFinished.Reset();
+        StepFinished.Reset();
+
+        _finished = false;
+        _speedScale = 1f;
+        _ignoreTimeScale = false;
+        _running = defaultRunning;
+        _elapsedTime = 0;
+        _currentStepIdx = 0;
+        _loopsDone = 0;
+        _steps.Clear();
+        _easeType = Easing.EaseType.In;
+        _transitionType = Easing.TransitionType.Linear;
+        _parallel = false;
+        _loops = 1;
+        
+        return this;
+    }
+    
+    public void PrepareForReuse()
+    {
+        MarkFinished(true);
+        _running = true;
+        _elapsedTime = 0;
+        _currentStepIdx = 0;
+        _loopsDone = 0;
+        foreach (var step in _steps)
+        {
+            step.PrepareForReuse();
+        }
+        MarkFinished(false);
     }
 
     public void Stop()
     {
-        StopInternal(true);
+        if (_finished) return;
+        _running = false;
+        _elapsedTime = 0;
+        MarkFinished(true);
     }
 
-    private void StopInternal(bool reset)
+    public bool IsRunning()
     {
-        _running = false;
-        if (reset)
-        {
-            _elapsedTime = 0;
-            _finished = false;
-        }
+        return _running;
     }
 
     public void AddTweener(ITweener tweener)
@@ -197,11 +241,28 @@ public class Tween
         return tweener;
     }
     
-    public RangeTweener TweenRange(float duration, Action<float> callback)
+    public SubTweenTweener TweenSubTween(Tween subTween)
+    {
+        var tweener = new SubTweenTweener(subTween);
+        AddTweener(tweener);
+        return tweener;
+    }
+    
+    public RangeTweener TweenRange(Action<float> callback, float duration)
     {
         var tweener = new RangeTweener(callback, duration, _transitionType, _easeType);
         AddTweener(tweener);
         return tweener;
+    }
+
+    private void MarkFinished(bool finished)
+    {
+        var shouldEmit = !_finished && finished;
+        _finished = finished;
+        if (shouldEmit)
+        {
+            Finished.Emit();
+        }
     }
 
     private class TweenStep
@@ -233,7 +294,7 @@ public class Tween
             return finished;
         }
 
-        public void Reset()
+        public void PrepareForReuse()
         {
             _started = false;
         }
@@ -247,6 +308,75 @@ public class Tween
 
             _started = true;
         }
+    }
+}
+
+
+public static class TweenEx
+{
+    private static Tween BindTween(this INodeInit self, Tween tween, bool oneShot, FrameTime? time = null)
+    {
+        if (self.State == Node.NodeState.Building)
+        {
+            Setup();
+        }
+        else
+        {
+            self.CallDeferred(Setup);
+        }
+        
+        return tween;
+
+        void Setup()
+        {
+            time ??= self.UseTime();
+            var callback = self.On<Update>(_ => tween.Step(time));
+            if (oneShot)
+            {
+                var disposeCallback = new SignalTarget(() =>
+                {
+                    callback.Dispose();
+                }).Deferred(self).OneShot();
+                tween.Finished.Connect(disposeCallback);   
+            }
+        } 
+    }
+    
+    public static Tween UseTween(this INodeInit self, FrameTime? time = null)
+    {
+        var tween = new Tween(false);
+        return self.BindTween(tween, false, time);
+    }
+    
+    public static Tween CreateOneShotTween(this INodeInit self, FrameTime? time = null)
+    {
+        var tween = new Tween(true);
+        return self.BindTween(tween, true, time);
+    }
+    
+    public static RangeTweener TweenMethod(this Tween self, Action<Vector2> setter, Vector2 from, Vector2 to, float duration)
+    {
+        return self.TweenRange(x => setter(from.Lerp(to, x)), duration);
+    }
+    
+    public static RangeTweener TweenMethod(this Tween self, Action<float> setter, float from, float to, float duration)
+    {
+        return self.TweenRange(x => setter(Mathf.Lerp(from, to, x)), duration);
+    }
+    
+    public static RangeTweener TweenMethod(this Tween self, Action<Color> setter, Color from, Color to, float duration)
+    {
+        return self.TweenRange(x => setter(from.Lerp(to, x)), duration);
+    }
+    
+    public static RangeTweener TweenMethodAngle(this Tween self, Action<Degrees> setter, Degrees from, Degrees to, float duration)
+    {
+        return self.TweenRange(x => setter(Mathf.LerpAngle(from, to, x)), duration);
+    }
+    
+    public static RangeTweener TweenMethodAngle(this Tween self, Action<Radians> setter, Radians from, Radians to, float duration)
+    {
+        return self.TweenRange(x => setter(Mathf.LerpAngle(from, to, x)), duration);
     }
 }
 
@@ -408,6 +538,54 @@ public class RangeTweener(
             remainingDelta = _elapsedTime - _delay - duration;
             _finished = true;
             return true;
+        }
+    }
+}
+
+public class SubTweenTweener(Tween tween) : ITweener
+{
+    private bool _finished;
+    private float _elapsedTime = 0f;
+    private float _delay = 0f;
+
+    public SubTweenTweener SetDelay(float delay)
+    {
+        _delay = delay;
+        return this;   
+    }
+    
+    public void Start() 
+    {
+        _finished = false;
+        _elapsedTime = 0f;
+        tween.PrepareForReuse();
+    }
+
+    public bool Step(ref float remainingDelta)
+    {
+        if (_finished)
+        {
+            return true;
+        }
+        
+        _elapsedTime += remainingDelta;
+
+        if (_elapsedTime < _delay)
+        {
+            remainingDelta = 0;
+            return false;
+        }
+
+        if (tween.StepWithForcedDelta(remainingDelta))
+        {
+            remainingDelta = _elapsedTime - _delay - tween.ElapsedTime;;
+            _finished = true;
+            return true;
+        }
+        else
+        {
+            remainingDelta = 0;
+            return false;
         }
     }
 }

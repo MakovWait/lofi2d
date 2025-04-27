@@ -227,7 +227,7 @@ public sealed class CNode2DTransform : INode2DTransform
         UpdateTransform();
     }
     
-    private void SetRotation(Radians rotation)
+    public void SetRotation(Radians rotation)
     {
         UpdateXFormValues();
         _rotation = rotation;
