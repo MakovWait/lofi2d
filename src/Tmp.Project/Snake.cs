@@ -1,6 +1,5 @@
 ﻿using Raylib_cs;
 using Tmp.Animation;
-using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Asset.Components;
 using Tmp.Core;
 using Tmp.Core.Comp;
@@ -9,6 +8,7 @@ using Tmp.Math;
 using Tmp.Math.Components;
 using Tmp.Render;
 using Tmp.Render.Components;
+using Tmp.Render.Texture;
 using Tmp.Time;
 
 namespace Tmp.Project;

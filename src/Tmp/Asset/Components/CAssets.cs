@@ -1,7 +1,7 @@
-using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Asset.Format.Text;
 using Tmp.Core.Comp;
 using Tmp.Render;
+using Tmp.Render.Texture;
 
 namespace Tmp.Asset.Components;
 

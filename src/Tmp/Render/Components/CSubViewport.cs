@@ -1,8 +1,8 @@
-using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Math;
 using Tmp.Math.Components;
+using Tmp.Render.Texture;
 using Tmp.Render.Util;
 
 namespace Tmp.Render.Components;

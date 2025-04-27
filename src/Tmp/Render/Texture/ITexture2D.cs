@@ -1,7 +1,6 @@
 using Tmp.Math;
-using Tmp.Render;
 
-namespace Tmp.Asset.BuiltIn.Texture;
+namespace Tmp.Render.Texture;
 
 public interface ITexture2D
 {

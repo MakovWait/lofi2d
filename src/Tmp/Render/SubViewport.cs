@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Raylib_cs;
-using Tmp.Asset.BuiltIn.Texture;
 using Tmp.Core.Comp;
 using Tmp.Math;
+using Tmp.Render.Texture;
 using Tmp.Render.Util;
 
 namespace Tmp.Render;

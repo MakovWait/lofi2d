@@ -1,11 +1,10 @@
 using Raylib_cs;
-using Tmp.IO;
-using Tmp.Math;
-using Tmp.Render;
 using Tmp.Asset.Format;
 using Tmp.Asset.Util;
+using Tmp.IO;
+using Tmp.Math;
 
-namespace Tmp.Asset.BuiltIn.Texture;
+namespace Tmp.Render.Texture;
 
 public sealed class Texture2D(FilePath texturePath) : IDisposable, ITexture2D
 {

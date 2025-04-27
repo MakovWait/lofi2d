@@ -1,9 +1,9 @@
+using Tmp.Asset;
 using Tmp.Asset.Format;
 using Tmp.Asset.Util;
 using Tmp.Math;
-using Tmp.Render;
 
-namespace Tmp.Asset.BuiltIn.Texture;
+namespace Tmp.Render.Texture;
 
 public class TextureRegion2D(IAsset<ITexture2D> origin, Rect2 srcRect) : ITexture2D, ISerializable
 {
