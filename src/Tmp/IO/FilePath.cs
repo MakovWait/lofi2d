@@ -45,3 +45,8 @@ public readonly record struct FilePath(string UncheckedValue)
         return new FilePath(path);
     }
 }
+
+public static class FilePathEx
+{
+    public static FilePath AsFilePath(this string path) => FilePath.FromStringPath(path);
+}
