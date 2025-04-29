@@ -626,8 +626,14 @@ public static class NodeInitEx
         self.CallDeferred(act => act(), action);
     }
 
-    public static void AutoDispose(this INodeInit self, IDisposable disposable)
+    public static T AutoDispose<T>(this INodeInit self, T disposable) where T : IDisposable
     {
         self.OnCleanup(() => disposable.Dispose());
+        return disposable;
+    }
+    
+    public static T DisposeWith<T>(this T self, INodeInit node) where T : IDisposable
+    {
+        return node.AutoDispose(self);
     }
 }
