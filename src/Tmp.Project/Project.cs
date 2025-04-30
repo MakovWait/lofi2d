@@ -1,5 +1,7 @@
 ﻿using Tmp.Asset;
 using Tmp.Asset.Components;
+using Tmp.Audio;
+using Tmp.Audio.Components;
 using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Math;
@@ -26,11 +28,11 @@ public static class Project
         {
             var gameSize = new Vector2I(320, 180);
             var settingDrawGizmo = root.CreateContext(new SettingDrawGizmo(false));
-            
+
             var boundsSize = new Vector2(320, 180);
             var bounds = root.CreateContext(new Bounds(new Rect2(-boundsSize / 2, boundsSize)));
             root.CreateContext(new Snake());
-            
+
             var viewportTexture = new Out<ITexture2D?>();
 
             return new CWindow(new WindowSettings
@@ -45,66 +47,75 @@ public static class Project
                 }
             })
             {
-                new CTime
-                {
-                    new CAssets(new Assets())
+                new CAudioBusLayout(
+                    new MasterBus
                     {
-                        new CNode2DTransformRoot()
+                        new AudioBus("Sfx"),
+                        new AudioBus("Music"),
+                    }
+                )
+                {
+                    new CTime
+                    {
+                        new CAssets(new Assets())
                         {
-                            new CSubViewport(new CSubViewport.Props
+                            new CNode2DTransformRoot()
                             {
-                                Settings = new SubViewport.Settings
+                                new CSubViewport(new CSubViewport.Props
                                 {
-                                    ClearColor = Colors.Transparent,
-                                    Size = gameSize,
-                                },
-                                Texture = viewportTexture
-                            })
-                            {
-                                new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
-                                new CCamera2D()
-                                {
-                                    Offset = gameSize / 2
-                                },
-                                new CSnake(),
-                                new CFood(),
-                                new CHud(),   
-                            },
-                      
-                            // shadow
-                            new СFunc(self =>
-                            {
-                                var transform = self.UseTransform2D();
-                                transform.Position += new Vector2(3, 3);
-                                
-                                var canvasItem = self.UseCanvasItem(transform);
-                                canvasItem.Material = self.UseShaderMaterial(
-                                    "assets://shaders/shadow_only/shader.jass",
-                                    new IShaderMaterialParameters.Lambda(shader =>
+                                    Settings = new SubViewport.Settings
                                     {
-                                        shader.SetUniform("shadowColor", Palette.Shadow);
-                                    })
-                                );
-                                
-                                canvasItem.OnDraw(ctx =>
+                                        ClearColor = Colors.Transparent,
+                                        Size = gameSize,
+                                    },
+                                    Texture = viewportTexture
+                                })
                                 {
-                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
-                                });
+                                    new CBoundsGizmo(bounds).If(settingDrawGizmo.Value),
+                                    new CCamera2D()
+                                    {
+                                        Offset = gameSize / 2
+                                    },
+                                    new CSnake(),
+                                    new CFood(),
+                                    new CHud(),
+                                },
 
-                                return [];
-                            }),
-                            new СFunc(self =>
-                            {
-                                var transform = self.UseTransform2D();
-                                var canvasItem = self.UseCanvasItem(transform);
-                                
-                                canvasItem.OnDraw(ctx =>
+                                // shadow
+                                new СFunc(self =>
                                 {
-                                    viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
-                                });
+                                    var transform = self.UseTransform2D();
+                                    transform.Position += new Vector2(3, 3);
 
-                                return [];
-                            }),
+                                    var canvasItem = self.UseCanvasItem(transform);
+                                    canvasItem.Material = self.UseShaderMaterial(
+                                        "assets://shaders/shadow_only/shader.jass",
+                                        new IShaderMaterialParameters.Lambda(shader =>
+                                        {
+                                            shader.SetUniform("shadowColor", Palette.Shadow);
+                                        })
+                                    );
+
+                                    canvasItem.OnDraw(ctx =>
+                                    {
+                                        viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
+                                    });
+
+                                    return [];
+                                }),
+                                new СFunc(self =>
+                                {
+                                    var transform = self.UseTransform2D();
+                                    var canvasItem = self.UseCanvasItem(transform);
+
+                                    canvasItem.OnDraw(ctx =>
+                                    {
+                                        viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
+                                    });
+
+                                    return [];
+                                }),
+                            }
                         }
                     }
                 }

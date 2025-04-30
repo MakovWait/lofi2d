@@ -1,4 +1,5 @@
 using Tmp.Asset.Format.Text;
+using Tmp.Audio;
 using Tmp.Core.Comp;
 using Tmp.Render;
 using Tmp.Render.Texture;
@@ -15,6 +16,7 @@ public sealed class CAssets(IAssets assets) : СFunc((self, children) =>
     textLoader.AddDeserializer(new Shader.Deserializer());
 
     assets.AddLoader(textLoader);
+    assets.AddLoader(new SoundSourceLoader());
 
     self.OnLateCleanup(assets.Dispose);
 

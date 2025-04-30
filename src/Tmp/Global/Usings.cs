@@ -8,3 +8,7 @@ global using _Shader = Raylib_cs.Shader;
 global using _Material = Raylib_cs.Material;
 global using _Color = Raylib_cs.Color;
 global using Color = Tmp.Math.Color;
+global using _Sound = Raylib_cs.Sound;
+global using _Music = Raylib_cs.Music;
+global using _AudioStream = Raylib_cs.AudioStream;
+global using _Wave = Raylib_cs.Wave;

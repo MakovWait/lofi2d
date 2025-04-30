@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using Tmp.Animation;
 using Tmp.Asset.Components;
+using Tmp.Audio;
 using Tmp.Core;
 using Tmp.Core.Comp;
 using Tmp.Core.Comp.Flow;
@@ -30,7 +31,7 @@ public class Snake
         });
     }
     
-    public void CheckHeadAndBodyCollisions()
+    public bool CheckHeadAndBodyCollisions()
     {
         var shouldRemove = false;
         foreach (var bodyPart in _bodyParts)
@@ -46,6 +47,7 @@ public class Snake
             }
         }
         _bodyParts.FlushRemoveQueue();
+        return shouldRemove;
     }
     
     public void SyncBodyPartsMovement()
@@ -111,11 +113,16 @@ public class CSnake : Component
     protected override Components Init(INodeInit self)
     {
         var snake = self.UseContext<Snake>();
-        
+        var soundPlayer = self.UseSoundPlayer("Sfx");
+        var hitSound = self.UseSound("assets://hit.ogg").DisposeWith(self);
+
         self.OnLate<Update>(_ =>
         {
             snake.SyncBodyPartsMovement();
-            snake.CheckHeadAndBodyCollisions();
+            if (snake.CheckHeadAndBodyCollisions())
+            {
+                soundPlayer.Play(hitSound);
+            };
         });
         
         return [
