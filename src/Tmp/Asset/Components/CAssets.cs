@@ -6,7 +6,7 @@ using Tmp.Render.Texture;
 
 namespace Tmp.Asset.Components;
 
-public sealed class CAssets(IAssets assets) : СFunc((self, children) =>
+public sealed class CAssets(IAssets assets) : CFunc((self, children) =>
 {
     self.CreateContext(assets);
 

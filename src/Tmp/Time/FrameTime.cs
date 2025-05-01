@@ -38,7 +38,7 @@ public class FrameTime(FrameTime? parent)
     }
 }
 
-public class CTime() : СFunc((self, children) =>
+public class CTime() : CFunc((self, children) =>
 {
     var time = self.CreateContext(new FrameTime(null));
     

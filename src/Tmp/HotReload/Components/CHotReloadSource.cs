@@ -2,7 +2,7 @@ using Tmp.Core.Comp;
 
 namespace Tmp.HotReload.Components;
 
-public class CHotReloadSource() : СFunc((self, children) =>
+public class CHotReloadSource() : CFunc((self, children) =>
 {
     var hotReloadSource = new HotReloadSource();
     self.CreateContext<IHotReloadSource>(hotReloadSource);

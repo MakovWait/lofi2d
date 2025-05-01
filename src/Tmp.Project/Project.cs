@@ -24,7 +24,7 @@ public static class Project
 {
     public static Component GetRoot()
     {
-        return new СFunc(root =>
+        return new CFunc(root =>
         {
             var gameSize = new Vector2I(320, 180);
             var settingDrawGizmo = root.CreateContext(new SettingDrawGizmo(false));
@@ -82,7 +82,7 @@ public static class Project
                                 },
 
                                 // shadow
-                                new СFunc(self =>
+                                new CFunc(self =>
                                 {
                                     var transform = self.UseTransform2D();
                                     transform.Position += new Vector2(3, 3);
@@ -103,7 +103,7 @@ public static class Project
 
                                     return [];
                                 }),
-                                new СFunc(self =>
+                                new CFunc(self =>
                                 {
                                     var transform = self.UseTransform2D();
                                     var canvasItem = self.UseCanvasItem(transform);
