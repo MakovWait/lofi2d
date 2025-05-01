@@ -290,7 +290,7 @@ public class LastPositions(int maxCount = 2048)
         // _positions.Add(position);
     }
 
-    public void Draw(Vector2 origin, IDrawContext? ctx)
+    public void Draw(Vector2 origin, IDrawContext ctx)
     {
         foreach (var position in _positions)
         {
