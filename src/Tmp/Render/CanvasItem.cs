@@ -77,37 +77,179 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
     public void DrawLine(Vector2 from, Vector2 to, Color color, float width=-1)
     {
         var transform = GetFinalTransform();
+
         if (width < 0)
         {
-            transform = new Transform2D(transform.Rotation, new Vector2(1, 1), transform.Skew, transform.Origin);
             from = transform.BasisXform(from);
             to = transform.BasisXform(to);
-            width = 1;
+            Raylib.DrawLineEx(transform.Origin + from, transform.Origin + to, width.Abs(), color * FinalModulate);
         }
         else
         {
-            from = transform.BasisXform(from);
-            to = transform.BasisXform(to);  
+            Rlgl.PushMatrix();
+            Rlgl.MultMatrixf(transform);
+            Raylib.DrawLineEx(transform.Origin + from, transform.Origin + to, width.Abs(), color * FinalModulate);
+            Rlgl.PopMatrix();   
         }
-        Raylib.DrawLineEx(transform.Origin + from, transform.Origin + to, width, color * FinalModulate);
     }
 
-    public void DrawRect(Rect2I rect, Color color)
+    public void DrawRect(Rect2 rect, Color color, bool filled = true, float width = -1)
     {
+        if (!filled && width == 0)
+        {
+            return;
+        }
+        
         var transform = GetFinalTransform();
         
-        Vector2 topLeft = rect.Position;
-        var topRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y);
-        var bottomRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y + rect.Size.Y);
-        var bottomLeft = new Vector2(rect.Position.X, rect.Position.Y + rect.Size.Y);
+        Rlgl.PushMatrix();
+        Rlgl.MultMatrixf(transform);
+        if (filled)
+        {
+            Raylib.DrawRectangleV(rect.Position, rect.Size, color * FinalModulate);
+        }
+        else
+        {
+            var effectiveWidth = width.Abs();
+            float finalWidth;
+            if (width > 0)
+            {
+                var averageScale = (transform.Scale.X + transform.Scale.Y) / 2.0f;
+                var unscaledWidth = effectiveWidth * averageScale;
+                finalWidth = unscaledWidth;
+            }
+            else
+            {
+                finalWidth = effectiveWidth;
+            }
+            
+            if ((finalWidth > rect.Size.X) || (finalWidth > rect.Size.Y))
+            {
+                if (rect.Size.X >= rect.Size.Y) finalWidth = rect.Size.Y/2;
+                else if (rect.Size.X <= rect.Size.Y) finalWidth = rect.Size.X/2;
+            }
+            
+            var topLeft = rect.Position;
+            var topRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y);
+            var bottomRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y + rect.Size.Y);
+            var bottomLeft = new Vector2(rect.Position.X, rect.Position.Y + rect.Size.Y);
+            
+            Raylib.DrawLineEx(topLeft, topRight, finalWidth, color * FinalModulate);
+            Raylib.DrawLineEx(topRight, bottomRight, finalWidth, color * FinalModulate);
+            Raylib.DrawLineEx(bottomRight, bottomLeft, finalWidth, color * FinalModulate);
+            Raylib.DrawLineEx(bottomLeft, topLeft, finalWidth, color * FinalModulate);
+        }
+        Rlgl.PopMatrix();
+    }
+
+    public void DrawRectRounded(Rect2 rect, Color color, float roundness, int segments, bool filled = true, float width = -1)
+    {
+        if (roundness <= 0)
+        {
+            DrawRect(rect, color, filled, width);
+            return;
+        }
         
-        topLeft = transform.Origin + transform.BasisXform(topLeft);
-        topRight = transform.Origin + transform.BasisXform(topRight);
-        bottomRight = transform.Origin + transform.BasisXform(bottomRight);
-        bottomLeft = transform.Origin + transform.BasisXform(bottomLeft);
+        if (!filled && width == 0)
+        {
+            return;
+        }
         
-        Raylib.DrawTriangle(topLeft, bottomLeft, bottomRight, color * FinalModulate);
-        Raylib.DrawTriangle(topLeft, bottomRight, topRight, color * FinalModulate);
+        var transform = GetFinalTransform();
+        Rlgl.PushMatrix();
+        Rlgl.MultMatrixf(transform);
+        if (filled)
+        {
+            Raylib.DrawRectangleRounded(rect, roundness, segments, color * FinalModulate);
+        }
+        else
+        {
+            var effectiveWidth = width.Abs();
+            float finalWidth;
+            if (width > 0)
+            {
+                var averageScale = (transform.Scale.X + transform.Scale.Y) / 2.0f;
+                var unscaledWidth = effectiveWidth * averageScale;
+                finalWidth = unscaledWidth;
+            }
+            else
+            {
+                finalWidth = effectiveWidth;
+            }   
+            Raylib.DrawRectangleRoundedLines(rect, roundness, segments, finalWidth, color * FinalModulate);
+            
+            // var effectiveWidth = width.Abs();
+            // float finalWidth;
+            // if (width > 0)
+            // {
+            //     var averageScale = (transform.Scale.X + transform.Scale.Y) / 2.0f;
+            //     var unscaledWidth = effectiveWidth * averageScale;
+            //     finalWidth = unscaledWidth;
+            // }
+            // else
+            // {
+            //     finalWidth = effectiveWidth;
+            // }
+            //
+            // if ((finalWidth > rect.Size.X) || (finalWidth > rect.Size.Y))
+            // {
+            //     if (rect.Size.X >= rect.Size.Y) finalWidth = rect.Size.Y/2;
+            //     else if (rect.Size.X <= rect.Size.Y) finalWidth = rect.Size.X/2;
+            // }
+            //
+            // var topLeft = rect.Position;
+            // var topRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y);
+            // var bottomRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y + rect.Size.Y);
+            // var bottomLeft = new Vector2(rect.Position.X, rect.Position.Y + rect.Size.Y);
+            //
+            // Raylib.DrawLineEx(topLeft, topRight, finalWidth, color * FinalModulate);
+            // Raylib.DrawLineEx(topRight, bottomRight, finalWidth, color * FinalModulate);
+            // Raylib.DrawLineEx(bottomRight, bottomLeft, finalWidth, color * FinalModulate);
+            // Raylib.DrawLineEx(bottomLeft, topLeft, finalWidth, color * FinalModulate);
+        }
+        Rlgl.PopMatrix();
+    }
+
+    public void DrawCircle(Vector2 position, float radius, Color color, bool filled = true, float width = -1)
+    {
+        if (!filled && width == 0)
+        {
+            return;
+        }
+        
+        var transform = GetFinalTransform();
+        
+        Rlgl.PushMatrix();
+        Rlgl.MultMatrixf(transform);
+        if (filled)
+        {
+            Raylib.DrawCircleV(position, radius, color * FinalModulate);
+        }
+        else
+        {
+            var effectiveWidth = width.Abs();
+            float finalWidth;
+            if (width > 0)
+            {
+                var averageScale = (transform.Scale.X + transform.Scale.Y) / 2.0f;
+                var unscaledWidth = effectiveWidth * averageScale;
+                finalWidth = unscaledWidth;
+            }
+            else
+            {
+                finalWidth = effectiveWidth;
+            }
+            
+            if (finalWidth.IsEqualApproxTo(1))
+            {
+                Raylib.DrawCircleLinesV(position, radius, color * FinalModulate);
+            }
+            else
+            {
+                Raylib.DrawRing(position, radius - finalWidth, radius, 0, 360, 36, color * FinalModulate);
+            }
+        }
+        Rlgl.PopMatrix();
     }
 
     public void DrawTextureRect(_Texture2D texture, Rect2 rect, Color color)
@@ -211,7 +353,29 @@ public interface IDrawContext
     /// </summary>
     void DrawLine(Vector2 from, Vector2 to, Color color, float width=-1);
     
-    void DrawRect(Rect2I rect, Color color);
+    /// <summary>
+    /// <para>Draws a rect. </para>
+    /// <para>If <paramref name="filled"/> is <see langword="true"/>, the rect will be filled with the <paramref name="color"/> specified. If <paramref name="filled"/> is <see langword="false"/>, the rect will be drawn as a stroke with the <paramref name="color"/> and <paramref name="width"/> specified.</para>
+    /// <para>If <paramref name="width"/> is negative, this means that when the CanvasItem is scaled, the lines will remain thin. If this behavior is not desired, then pass a positive <paramref name="width"/> like <c>1.0</c>.</para>
+    /// <para><b>Note:</b> <paramref name="width"/> is only effective if <paramref name="filled"/> is <see langword="false"/>.</para>
+    /// </summary>
+    void DrawRect(Rect2 rect, Color color, bool filled = true, float width = -1f);
+    
+    /// <summary>
+    /// <para>Draws a rounded rect. </para>
+    /// <para>If <paramref name="filled"/> is <see langword="true"/>, the rect will be filled with the <paramref name="color"/> specified. If <paramref name="filled"/> is <see langword="false"/>, the rect will be drawn as a stroke with the <paramref name="color"/> and <paramref name="width"/> specified.</para>
+    /// <para>If <paramref name="width"/> is negative, this means that when the CanvasItem is scaled, the lines will remain thin. If this behavior is not desired, then pass a positive <paramref name="width"/> like <c>1.0</c>.</para>
+    /// <para><b>Note:</b> <paramref name="width"/> is only effective if <paramref name="filled"/> is <see langword="false"/>.</para>
+    /// </summary>
+    void DrawRectRounded(Rect2 rect, Color color, float roundness, int segments, bool filled = true, float width = -1f);
+    
+    /// <summary>
+    /// <para>Draws a circle. </para>
+    /// <para>If <paramref name="filled"/> is <see langword="true"/>, the circle will be filled with the <paramref name="color"/> specified. If <paramref name="filled"/> is <see langword="false"/>, the circle will be drawn as a stroke with the <paramref name="color"/> and <paramref name="width"/> specified.</para>
+    /// <para>If <paramref name="width"/> is negative, this means that when the CanvasItem is scaled, the lines will remain thin. If this behavior is not desired, then pass a positive <paramref name="width"/> like <c>1.0</c>.</para>
+    /// <para><b>Note:</b> <paramref name="width"/> is only effective if <paramref name="filled"/> is <see langword="false"/>.</para>
+    /// </summary>
+    void DrawCircle(Vector2 position, float radius, Color color, bool filled = true, float width = -1f);
 
     internal void DrawTextureRect(_Texture2D texture, Rect2 rect, Color modulate);
     

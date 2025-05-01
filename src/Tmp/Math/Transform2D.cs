@@ -609,6 +609,13 @@ public struct Transform2D : IEquatable<Transform2D>
     /// <returns>A string representation of this transform.</returns>
     public override readonly string ToString() => this.ToString((string)null);
 
+    public static implicit operator System.Numerics.Matrix4x4(Transform2D t) => new(
+        t.X.X, t.Y.X, 0.0f, t.Origin.X,
+        t.X.Y, t.Y.Y, 0.0f, t.Origin.Y,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+    
     /// <summary>
     /// Converts this <see cref="T:Godot.Transform2D" /> to a string with the given <paramref name="format" />.
     /// </summary>

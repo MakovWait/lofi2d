@@ -36,4 +36,9 @@ public static class Extensions
     {
         return Mathf.Abs(self);
     }
+    
+    public static bool IsEqualApproxTo(this float self, float value)
+    {
+        return Mathf.IsEqualApprox(self, value);
+    }
 }
