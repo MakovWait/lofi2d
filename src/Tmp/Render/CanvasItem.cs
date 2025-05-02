@@ -252,6 +252,38 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
         Rlgl.PopMatrix();
     }
 
+    public void DrawText(
+        _Font font, Vector2 position, string text, float spacing, float size = 16, Color? modulate = null,
+        TextOutline? outline = null
+    )
+    {
+        modulate ??= Colors.White;
+        
+        var transform = GetFinalTransform();
+        Raylib.SetTextLineSpacing((int)size);
+        
+        Rlgl.PushMatrix();
+        Rlgl.MultMatrixf(transform);
+        if (outline.HasValue)
+        {
+            var thickness = outline.Value.Size;
+            var outlineColor = outline.Value.Color;
+            for (var dx = -thickness; dx <= thickness; dx++)
+            {
+                for (var dy = -thickness; dy <= thickness; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    Raylib.DrawTextEx(
+                        font, text, position + new Vector2(dx, dy), size, spacing, 
+                        outlineColor * FinalModulate
+                    );
+                }
+            }
+        }
+        Raylib.DrawTextEx(font, text, position, size, spacing, modulate.Value * FinalModulate);
+        Rlgl.PopMatrix();
+    }
+    
     public void DrawTextureRect(_Texture2D texture, Rect2 rect, Color color)
     {
         DrawTextureRectRegion(texture, rect, new Rect2(0, 0, texture.Width, texture.Height), color);
@@ -345,6 +377,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
     }
 }
 
+public readonly record struct TextOutline(float Size, Color Color);
+
 public interface IDrawContext
 {
     /// <summary>
@@ -377,6 +411,11 @@ public interface IDrawContext
     /// </summary>
     void DrawCircle(Vector2 position, float radius, Color color, bool filled = true, float width = -1f);
 
+    void DrawText(
+        _Font font, Vector2 position, string text, float spacing, float size = 16, Color? modulate = null, 
+        TextOutline? outline = null
+    );
+    
     internal void DrawTextureRect(_Texture2D texture, Rect2 rect, Color modulate);
     
     internal void DrawTextureRectRegion(_Texture2D texture, Rect2 rect, Rect2 sourceRect, Color modulate);

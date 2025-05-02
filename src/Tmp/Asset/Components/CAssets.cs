@@ -2,6 +2,7 @@ using Tmp.Asset.Format.Text;
 using Tmp.Audio;
 using Tmp.Core.Comp;
 using Tmp.Render;
+using Tmp.Render.Text;
 using Tmp.Render.Texture;
 
 namespace Tmp.Asset.Components;
@@ -17,6 +18,7 @@ public sealed class CAssets(IAssets assets) : CFunc((self, children) =>
 
     assets.AddLoader(textLoader);
     assets.AddLoader(new SoundSourceLoader());
+    assets.AddLoader(new DefaultFontLoader());
 
     self.OnLateCleanup(assets.Dispose);
 
