@@ -1,4 +1,6 @@
-﻿using Tmp.Asset;
+﻿using System.Numerics;
+using Raylib_cs;
+using Tmp.Asset;
 using Tmp.Asset.Components;
 using Tmp.Audio;
 using Tmp.Audio.Components;
@@ -79,6 +81,42 @@ public static class Project
                                     new CSnake(),
                                     new CFood(),
                                     new CHud(),
+                                    
+                                    new CFunc(self =>
+                                    {
+                                        var time = self.UseTime();
+                                        var transform = self.UseTransform2D();
+                                        var canvasItem = self.UseCanvasItem(transform);
+                                    
+                                        canvasItem.OnDraw(ctx =>
+                                        {
+                                            Rlgl.PushMatrix();
+                                            Rlgl.MultMatrixf(transform.Global);
+                                            Raylib.DrawText("hell\no!", 0, 0, 10, Colors.White);
+                                            Rlgl.PopMatrix();
+                                            
+                                            ctx.DrawCircle(new Vector2I(32, 0), 16, Colors.White, false, -1);
+                                            // ctx.DrawRect(new Rect2(-8, -8, 16, 16), Colors.White, true, -3);
+                                            ctx.DrawRectRounded(new Rect2(-8, -8, 16, 16), Colors.White, 0.4f, 32, false, -1);
+                                            
+                                            ctx.DrawLine(new Vector2(-32, -32), new Vector2(-32, 32), Colors.White, 1);
+                                            
+                                            // Raylib.DrawRectangleRounded(new Rect2(-16, -16, 32, 32), 0.4f, 32, Colors.White);
+                                            // Raylib.DrawRectangleRoundedLines(new Rect2(-16, -16, 32, 32), 0.4f, 32, 2, Colors.White);
+                                        });
+
+                                        self.On<Update>(_ =>
+                                        {
+                                            // transform.Skew = 0;
+                                            transform.Scale = new Vector2(2, 1f);
+                                            transform.Rotation = 0;
+                                            transform.Skew = Mathf.Lerp(-5.DegToRad(), 5.DegToRad(), Mathf.Sin(time.Elapsed));
+                                            // transform.Rotation = Mathf.Lerp(-5.DegToRad(), 5.DegToRad(), Mathf.Sin(time.Elapsed));
+                                            // transform.Position = new Vector2(100, 100);
+                                        });
+                                    
+                                        return [];
+                                    })
                                 },
 
                                 // shadow
