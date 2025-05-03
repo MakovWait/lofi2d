@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+<!--        <PackageReference Include="ImGui.NET" Version="1.90.9.1" />-->
+        <PackageReference Include="rlImgui-cs" Version="2.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lofi.Project\Lofi.Project.csproj" />
+        <ProjectReference Include="..\Lofi\Lofi.csproj" />
+    </ItemGroup>
+    
+</Project>
