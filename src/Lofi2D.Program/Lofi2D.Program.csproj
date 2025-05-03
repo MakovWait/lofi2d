@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Lofi2D.Project\Lofi2D.Project.csproj" />
+      <ProjectReference Include="..\Lofi2D\Lofi2D.csproj" />
+    </ItemGroup>
+
+</Project>

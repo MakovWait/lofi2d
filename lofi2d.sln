@@ -3,19 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi", "src\Lofi\Lofi.csproj", "{3604E457-DD57-4A89-9965-E8E6DCF44303}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D", "src\Lofi2D\Lofi2D.csproj", "{3604E457-DD57-4A89-9965-E8E6DCF44303}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Program", "src\Lofi.Program\Lofi.Program.csproj", "{CFA3BC41-39DD-4688-A6CB-5536A39502BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Program", "src\Lofi2D.Program\Lofi2D.Program.csproj", "{CFA3BC41-39DD-4688-A6CB-5536A39502BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Tests", "src\Lofi.Tests\Lofi.Tests.csproj", "{A7B4D21E-3E46-4FAE-9289-E8A78EF95139}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Tests", "src\Lofi2D.Tests\Lofi2D.Tests.csproj", "{A7B4D21E-3E46-4FAE-9289-E8A78EF95139}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Wasm", "src\Lofi.Wasm\Lofi.Wasm.csproj", "{DA96F152-DFB5-429E-8D7C-EF9FD44EBC26}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Wasm", "src\Lofi2D.Wasm\Lofi2D.Wasm.csproj", "{DA96F152-DFB5-429E-8D7C-EF9FD44EBC26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Project", "src\Lofi.Project\Lofi.Project.csproj", "{181178ED-BDCB-4A50-A7B8-2500478E8EDC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Project", "src\Lofi2D.Project\Lofi2D.Project.csproj", "{181178ED-BDCB-4A50-A7B8-2500478E8EDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Analyzers", "src\Lofi.Analyzers\Lofi.Analyzers.csproj", "{E01D0254-DA3C-4598-BEDF-D2F0603D8FC4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Analyzers", "src\Lofi2D.Analyzers\Lofi2D.Analyzers.csproj", "{E01D0254-DA3C-4598-BEDF-D2F0603D8FC4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi.Editor", "src\Lofi.Editor\Lofi.Editor.csproj", "{BFBB4223-EC91-413F-9CE7-49997F3B728F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lofi2D.Editor", "src\Lofi2D.Editor\Lofi2D.Editor.csproj", "{BFBB4223-EC91-413F-9CE7-49997F3B728F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runners", "Runners", "{5E83E703-8D35-4F66-AD17-11DAA977AA1E}"
 EndProject
