@@ -17,7 +17,7 @@ public class FrameTime(FrameTime? parent)
 
     public void Tick(float delta)
     {
-        Delta = delta;
+        DeltaUnscaled = delta;
         Delta = delta * FinalScale();
         Elapsed += Delta;
     }
