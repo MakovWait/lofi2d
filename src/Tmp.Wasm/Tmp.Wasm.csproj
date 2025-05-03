@@ -18,7 +18,10 @@
     <ItemGroup>
         <WasmExtraFilesToDeploy Include="index.html" />
         <WasmExtraFilesToDeploy Include="main.js" />
-        <NativeFileReference Include="raylib.a" />
+        
+<!--        <NativeFileReference Include="native\gles2\raylib.a" />-->
+        <NativeFileReference Include="native\gles3\raylib.a" />
+        
         <WasmFilesToIncludeInFileSystem Include="..\Tmp.Project\assets\**\*.*" TargetPath="assets\%(RecursiveDir)\%(Filename)%(Extension)" />
     </ItemGroup>
 
@@ -31,7 +34,8 @@
         <When Condition=" $(Configuration) == 'Debug' ">
             <PropertyGroup>
                 <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
-                <EmccFlags>-sUSE_GLFW=3 -sVERBOSE=1 -Wbad-function-cast -Wcast-function-type -O2 -g3 -sINITIAL_MEMORY=128MB -sMAXIMUM_MEMORY=2048MB -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>
+<!--                <EmccFlags>-sUSE_GLFW=3 -sVERBOSE=1 -Wbad-function-cast -Wcast-function-type -O2 -g3 -sINITIAL_MEMORY=128MB -sMAXIMUM_MEMORY=2048MB -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>-->
+                <EmccFlags>-sFULL_ES3=1 -sUSE_WEBGL2=1 -sUSE_GLFW=3 -sVERBOSE=1 -Wbad-function-cast -Wcast-function-type -O2 -g3 -sINITIAL_MEMORY=128MB -sMAXIMUM_MEMORY=2048MB -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>
             </PropertyGroup>
         </When>
         <When Condition=" $(Configuration) == 'Release' ">
