@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
         <WasmMainJSPath>main.js</WasmMainJSPath>
@@ -10,16 +10,15 @@
         <EnableAggressiveTrimming>true</EnableAggressiveTrimming>
         <PublishTrimmed>true</PublishTrimmed>
         <TrimMode>full</TrimMode>
-        <RunAOTCompilation>true</RunAOTCompilation>
         <WasmBuildNative>true</WasmBuildNative>
         <WasmNativeStrip>true</WasmNativeStrip>
         <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+        <WasmMainJSPath>wwwroot\main.js</WasmMainJSPath>
+        <UseWebGL2>true</UseWebGL2>
     </PropertyGroup>
     
     <ItemGroup>
-        <WasmExtraFilesToDeploy Include="index.html" />
-        <WasmExtraFilesToDeploy Include="main.js" />
-        <NativeFileReference Include="raylib.a" />
+        <WasmExtraFilesToDeploy Include="wwwroot/**/*.*" />
         <WasmFilesToIncludeInFileSystem Include="..\Tmp.Project\assets\**\*.*" TargetPath="assets\%(RecursiveDir)\%(Filename)%(Extension)" />
     </ItemGroup>
 
@@ -37,8 +36,26 @@
         </When>
         <When Condition=" $(Configuration) == 'Release' ">
             <PropertyGroup>
+                <RunAOTCompilation>true</RunAOTCompilation>
                 <EmccFlags>-s USE_GLFW=3 -O3 -lexports.js</EmccFlags>
             </PropertyGroup>
         </When>
     </Choose>
+
+    <Choose>
+        <When Condition="'$(UseWebGL2)' == 'true'">
+            <PropertyGroup>
+                <EmccExtraLDFlags>-sFULL_ES3=1 -sUSE_WEBGL2=1</EmccExtraLDFlags>
+            </PropertyGroup>
+            <ItemGroup>
+                <NativeFileReference Include="native\gles3\raylib.a" />
+            </ItemGroup>
+        </When>
+        <Otherwise>
+            <ItemGroup>
+                <NativeFileReference Include="native\gles2\raylib.a" />
+            </ItemGroup>
+        </Otherwise>
+    </Choose>
+    
 </Project>

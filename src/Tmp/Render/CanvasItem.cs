@@ -175,8 +175,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
             else
             {
                 finalWidth = effectiveWidth;
-            }   
-            Raylib.DrawRectangleRoundedLines(rect, roundness, segments, finalWidth, color * FinalModulate);
+            }
+            Raylib.DrawRectangleRoundedLinesEx(rect, roundness, segments, finalWidth, color * FinalModulate);
             
             // var effectiveWidth = width.Abs();
             // float finalWidth;
