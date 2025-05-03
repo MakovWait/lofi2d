@@ -1,6 +1,6 @@
 import { dotnet } from './_framework/dotnet.js'
 
-const { getAssemblyExports, getConfig } = await dotnet
+const { getAssemblyExports, getConfig, runMain } = await dotnet
     .withDiagnosticTracing(false)
     .create();
 
@@ -15,5 +15,5 @@ function mainLoop() {
     window.requestAnimationFrame(mainLoop);
 }
 
-await dotnet.run();
+await runMain();
 window.requestAnimationFrame(mainLoop);
