@@ -13,15 +13,12 @@
         <WasmBuildNative>true</WasmBuildNative>
         <WasmNativeStrip>true</WasmNativeStrip>
         <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+        <WasmMainJSPath>wwwroot\main.js</WasmMainJSPath>
+        <UseWebGL2>true</UseWebGL2>
     </PropertyGroup>
     
     <ItemGroup>
-        <WasmExtraFilesToDeploy Include="index.html" />
-        <WasmExtraFilesToDeploy Include="main.js" />
-        
-<!--        <NativeFileReference Include="native\gles2\raylib.a" />-->
-        <NativeFileReference Include="native\gles3\raylib.a" />
-        
+        <WasmExtraFilesToDeploy Include="wwwroot/**/*.*" />
         <WasmFilesToIncludeInFileSystem Include="..\Tmp.Project\assets\**\*.*" TargetPath="assets\%(RecursiveDir)\%(Filename)%(Extension)" />
     </ItemGroup>
 
@@ -35,8 +32,6 @@
             <PropertyGroup>
                 <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
                 <EmccFlags>-sUSE_GLFW=3 -sVERBOSE=1 -Wbad-function-cast -Wcast-function-type -O2 -g3 -sINITIAL_MEMORY=128MB -sMAXIMUM_MEMORY=2048MB -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>
-                <!--WEBGL2-->
-                <EmccExtraLDFlags>-sFULL_ES3=1 -sUSE_WEBGL2=1</EmccExtraLDFlags>
             </PropertyGroup>
         </When>
         <When Condition=" $(Configuration) == 'Release' ">
@@ -46,4 +41,21 @@
             </PropertyGroup>
         </When>
     </Choose>
+
+    <Choose>
+        <When Condition="'$(UseWebGL2)' == 'true'">
+            <PropertyGroup>
+                <EmccExtraLDFlags>-sFULL_ES3=1 -sUSE_WEBGL2=1</EmccExtraLDFlags>
+            </PropertyGroup>
+            <ItemGroup>
+                <NativeFileReference Include="native\gles3\raylib.a" />
+            </ItemGroup>
+        </When>
+        <Otherwise>
+            <ItemGroup>
+                <NativeFileReference Include="native\gles2\raylib.a" />
+            </ItemGroup>
+        </Otherwise>
+    </Choose>
+    
 </Project>
