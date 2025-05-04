@@ -176,6 +176,11 @@ public class Node : INodeInit
         return FindInContext<T>();
     }
 
+    public T? UseNullableContext<T>()
+    {
+        return FindInContextOrNull<T>();
+    }
+
     public void Call<T>(T args)
     {
         _callbacks.Call(args);
@@ -206,9 +211,21 @@ public class Node : INodeInit
 
     private T FindInContext<T>()
     {
-        if (_parent == null)
+        var value = FindInContextOrNull<T>();
+        
+        if (value == null)
         {
             throw new Exception($"Unable to find a context value for {typeof(T)}");
+        }
+
+        return value;
+    }
+    
+    private T? FindInContextOrNull<T>()
+    {
+        if (_parent == null)
+        {
+            return default;
         }
 
         if (_parent._ctx.Has<T>())
@@ -216,7 +233,7 @@ public class Node : INodeInit
             return _parent._ctx.Get<T>();
         }
         
-        return _parent!.FindInContext<T>();
+        return _parent!.FindInContextOrNull<T>();
     }
     
     private string NodePath => string.Join("/", _parent?.NodePath ?? "", Name);
@@ -604,6 +621,8 @@ public interface INodeInit : INodeLocation, ICallDeferredSource
     T CreateContext<T>(T value);
     
     T UseContext<T>();
+    
+    T? UseNullableContext<T>();
 
     void Call<T>(T args);
     
