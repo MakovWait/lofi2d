@@ -6,7 +6,7 @@ namespace Lofi2D.Render.Components;
 
 public static class Hooks
 {
-    public static CanvasItem UseCanvasItem(this INodeInit self, CNode2DTransform transform)
+    public static CanvasItem UseCanvasItem(this INodeInit self)
     {
         var parent = self.UseContext<ICanvasItemContainer>();
         var item = new CanvasItem();
@@ -18,6 +18,13 @@ public static class Hooks
         {
             parent.RemoveChild(item);
         });
+
+        return item;
+    }
+    
+    public static CanvasItem UseCanvasItem(this INodeInit self, CNode2DTransform transform)
+    {
+        var item = self.UseCanvasItem();
 
         self.On<PreDraw>(_ =>
         {
