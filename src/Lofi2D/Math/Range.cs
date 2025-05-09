@@ -5,9 +5,9 @@
 /// </summary>
 public readonly struct Range(float start, float end)
 {
-    public readonly float Start = start;
+    public float Start { get; init; } = start;
 
-    public readonly float End = end;
+    public float End { get; init; } = end;
 
     public bool Contains(float v) => v >= Start && v <= End;
 
