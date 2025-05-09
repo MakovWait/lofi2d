@@ -13,3 +13,4 @@ global using _Music = Raylib_cs.Music;
 global using _AudioStream = Raylib_cs.AudioStream;
 global using _Wave = Raylib_cs.Wave;
 global using _Font = Raylib_cs.Font;
+global using Range = Lofi2D.Math.Range;
