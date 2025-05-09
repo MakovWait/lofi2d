@@ -15,7 +15,7 @@ public readonly struct RangeF(float start, float end)
         return Mathf.Lerp(Start, End, progress);
     }
 
-    public RangeF Clamp(float min, float max)
+    public RangeF Clamped(float min, float max)
     {
         return new RangeF(Mathf.Clamp(Start, min, max), Mathf.Clamp(End, min, max));
     }
