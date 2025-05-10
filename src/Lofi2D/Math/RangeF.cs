@@ -25,6 +25,22 @@ public readonly struct RangeF(float start, float end)
         Mathf.Max(Start, End)
     );
     
+    public static bool operator ==(RangeF left, RangeF right) => left.Equals(right);
+    
+    public static bool operator !=(RangeF left, RangeF right) => !left.Equals(right);
+    
+    public bool Equals(RangeF other)
+    {
+        return Start == other.Start &&
+               End == other.End;
+    }
+
+    public bool IsEqualApprox(RangeF other)
+    {
+        return Mathf.IsEqualApprox(Start, other.Start) &&
+               Mathf.IsEqualApprox(End, other.End);
+    }
+    
     public override string ToString()
     {
         return $"[{Start}, {End}]";
