@@ -4,6 +4,7 @@ using Lofi2D.Audio;
 using Lofi2D.Audio.Components;
 using Lofi2D.Core;
 using Lofi2D.Core.Comp;
+using Lofi2D.GUI;
 using Lofi2D.Math;
 using Lofi2D.Math.Components;
 using Lofi2D.Render;
@@ -83,36 +84,28 @@ public static class Project
                                     
                                     new CFunc(self =>
                                     {
-                                        var time = self.UseTime();
-                                        var transform = self.UseTransform2D();
-                                        var canvasItem = self.UseCanvasItem(transform);
-                                    
-                                        canvasItem.OnDraw(ctx =>
-                                        {
-                                            Rlgl.PushMatrix();
-                                            Rlgl.MultMatrixf(transform.Global);
-                                            Raylib.DrawText("hell\no!", 0, 0, 10, Colors.White);
-                                            Rlgl.PopMatrix();
-                                            
-                                            ctx.DrawCircle(new Vector2I(32, 0), 16, Colors.White, false, -1);
-                                            // ctx.DrawRect(new Rect2(-8, -8, 16, 16), Colors.White, true, -3);
-                                            ctx.DrawRectRounded(new Rect2(-8, -8, 16, 16), Colors.White, 0.4f, 32, false, -1);
-                                            
-                                            ctx.DrawLine(new Vector2(-32, -32), new Vector2(-32, 32), Colors.White, 1);
-                                            
-                                            // Raylib.DrawRectangleRounded(new Rect2(-16, -16, 32, 32), 0.4f, 32, Colors.White);
-                                            // Raylib.DrawRectangleRoundedLines(new Rect2(-16, -16, 32, 32), 0.4f, 32, 2, Colors.White);
-                                        });
+                                        var parentControl = self.UseControl();
+                                        parentControl.Size = new Vector2(32, 32);
 
-                                        self.On<Update>(_ =>
-                                        {
-                                            // transform.Skew = 0;
-                                            transform.Scale = new Vector2(2, 1f);
-                                            transform.Rotation = 0;
-                                            transform.Skew = Mathf.Lerp(-5.DegToRad(), 5.DegToRad(), Mathf.Sin(time.Elapsed));
-                                            // transform.Rotation = Mathf.Lerp(-5.DegToRad(), 5.DegToRad(), Mathf.Sin(time.Elapsed));
-                                            // transform.Position = new Vector2(100, 100);
-                                        });
+                                        return [
+                                            new CFunc(self =>
+                                            {
+                                                var control = self.UseControl();
+                                                
+                                                // control.MinSize = new Vector2(2, 2);
+                                                control.Anchor = new AnchorPoints(1f, 0.0f, 1.0f, 0.0f);
+                                                control.Offset = new AnchorOffsets(-10, 0, 0, 10);
+                                                control.HGrow = Control.HGrowDirection.Both;
+                                                control.VGrow = Control.VGrowDirection.Bottom;
+                                                
+                                                self.On<Update>(_ =>
+                                                {
+                                                    
+                                                });
+                                                
+                                                return [];
+                                            })
+                                        ];
                                     
                                         return [];
                                     })
