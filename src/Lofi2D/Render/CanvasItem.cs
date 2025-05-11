@@ -129,15 +129,7 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
                 else if (rect.Size.X <= rect.Size.Y) finalWidth = rect.Size.X/2;
             }
             
-            var topLeft = rect.Position;
-            var topRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y);
-            var bottomRight = new Vector2(rect.Position.X + rect.Size.X, rect.Position.Y + rect.Size.Y);
-            var bottomLeft = new Vector2(rect.Position.X, rect.Position.Y + rect.Size.Y);
-            
-            Raylib.DrawLineEx(topLeft, topRight, finalWidth, color * FinalModulate);
-            Raylib.DrawLineEx(topRight, bottomRight, finalWidth, color * FinalModulate);
-            Raylib.DrawLineEx(bottomRight, bottomLeft, finalWidth, color * FinalModulate);
-            Raylib.DrawLineEx(bottomLeft, topLeft, finalWidth, color * FinalModulate);
+            Raylib.DrawRectangleLinesEx(new Rect2(rect.Position + new Vector2(-1, -1), rect.Size + new Vector2(1, 1)), finalWidth, Colors.WebGray);
         }
         Rlgl.PopMatrix();
     }
@@ -177,6 +169,8 @@ public class CanvasItem : ICanvasItemContainer, IDrawContext, IMaterialTarget
                 finalWidth = effectiveWidth;
             }
             Raylib.DrawRectangleRoundedLinesEx(rect, roundness, segments, finalWidth, color * FinalModulate);
+            // Raylib.DrawRectangleRounded(rect, 0.1f, 0, color * FinalModulate);
+            // Raylib.DrawRectangleRoundedLines(new Rect2(rect.Position + new Vector2(1, 1), rect.Size + new Vector2(-2, -2)), 0.1f, 0, Colors.Red);
             
             // var effectiveWidth = width.Abs();
             // float finalWidth;
