@@ -118,17 +118,17 @@ public static class Project
                                     transform.Position += new Vector2(3, 3);
 
                                     var canvasItem = self.UseCanvasItem(transform);
-                                    canvasItem.Material = self.UseShaderMaterial(
-                                        "assets://shaders/shadow_only/shader.jass",
-                                        new IShaderMaterialParameters.Lambda(shader =>
-                                        {
-                                            shader.SetUniform("shadowColor", Palette.Shadow);
-                                        })
-                                    );
+                                    // canvasItem.Material = self.UseShaderMaterial(
+                                    //     "assets://shaders/shadow_only/shader.jass",
+                                    //     new IShaderMaterialParameters.Lambda(shader =>
+                                    //     {
+                                    //         shader.SetUniform("shadowColor", Palette.Shadow);
+                                    //     })
+                                    // );
 
                                     canvasItem.OnDraw(ctx =>
                                     {
-                                        viewportTexture.Value!.Draw(ctx, Vector2.Zero, Colors.White);
+                                        viewportTexture.Value!.Draw(ctx, Vector2.Zero, Palette.Shadow);
                                     });
 
                                     return [];
