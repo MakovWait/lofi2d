@@ -11,7 +11,6 @@ internal sealed class _Asset<T>(
 {
     private T _value = value;
     private bool _disposed;
-    private T _value1;
 
     public AssetPath Path { get; } = path;
     
